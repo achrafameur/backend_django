@@ -17,8 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from backend.views import salutView
+from backend.views import GetAllClientsAPIView, InscriptionAPIView, ConnexionAPIView
 
 urlpatterns = [
     path('salut/', salutView),
-    path('admin/', admin.site.urls),
+    # path('admin/', admin.site.urls),
+    path('api/clients/getAll/', GetAllClientsAPIView.as_view()),
+    path('api/inscription/', InscriptionAPIView.as_view(), name='inscription'),
+    path('api/connexion/', ConnexionAPIView.as_view(), name='connexion'),
 ]
