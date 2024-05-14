@@ -15,6 +15,9 @@ from environ import Env
 from pfe.models import Clients, Admins
 from backend.serializers import ClientsSerializer, AdminSerializer
 from django.contrib.auth.hashers import make_password, check_password
+import jwt
+from datetime import datetime, timedelta
+from django.conf import settings
 
 
 env = Env()
@@ -50,16 +53,23 @@ class ConnexionAPIView(APIView):
         try:
             admin = Admins.objects.get(adresse_mail=email)
             if check_password(password, admin.password):
-                admin_id = admin.id
-                id_service = admin.id_service
-                message = f"Connexion réussie. Connecté en tant que "
-                if id_service == 0:
-                    message += "super admin"
-                elif id_service == 1:
-                    message += "client"
-                elif id_service == 2:
-                    message += "professionnel"
-                return JsonResponse({"message": message, "admin_id": admin_id})
+                # Création du JWT payload
+                if admin.id_service == 0:
+                    admin_type = 'super_admin'
+                elif admin.id_service == 1:
+                    admin_type = 'client'
+                else:
+                    admin_type = 'professionnel'
+                # Création du JWT payload avec le type d'administrateur
+                payload = {
+                    'admin_id': admin.id,
+                    'admin_type': admin_type,
+                    'exp': datetime.utcnow() + timedelta(days=1)  # Token expire après 1 jour
+                }
+                # Génération du JWT token
+                token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+                # Message de succès avec le token
+                return JsonResponse({"message": "Connexion réussie", "token": token})
             else:
                 return JsonResponse({"message": "Mot de passe incorrect"}, status=status.HTTP_400_BAD_REQUEST)
         except Admins.DoesNotExist:
