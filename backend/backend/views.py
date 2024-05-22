@@ -69,7 +69,7 @@ class ConnexionAPIView(APIView):
                 # Génération du JWT token
                 token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
                 # Message de succès avec le token
-                return JsonResponse({"message": "Connexion réussie", "token": token})
+                return JsonResponse({"message": "Connexion réussie", "token": token, "id_service": admin.id_service})
             else:
                 return JsonResponse({"message": "Mot de passe incorrect"}, status=status.HTTP_400_BAD_REQUEST)
         except Admins.DoesNotExist:

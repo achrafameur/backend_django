@@ -1,10 +1,5 @@
 ENV
 .env
-sauvegarde pycache externalisation settings.py
-
-# settings
-apteed_epp/apteed_epp/settings.py
-apteed_epp/settings.py
 
 # Django #
 *.log
