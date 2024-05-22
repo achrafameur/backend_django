@@ -18,6 +18,8 @@ from django.contrib.auth.hashers import make_password, check_password
 import jwt
 from datetime import datetime, timedelta
 from django.conf import settings
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import RetrieveAPIView
 
 
 env = Env()
@@ -69,8 +71,23 @@ class ConnexionAPIView(APIView):
                 # Génération du JWT token
                 token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
                 # Message de succès avec le token
-                return JsonResponse({"message": "Connexion réussie", "token": token, "id_service": admin.id_service})
+                return JsonResponse({"message": "Connexion réussie", "token": token, "id_service": admin.id_service, "id": admin.id})
             else:
                 return JsonResponse({"message": "Mot de passe incorrect"}, status=status.HTTP_400_BAD_REQUEST)
         except Admins.DoesNotExist:
             return JsonResponse({"message": "Aucun utilisateur trouvé avec cet e-mail"}, status=status.HTTP_400_BAD_REQUEST)
+
+# class LogoutAPIView(APIView):
+#     # permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+#         # Supprimer le token de l'utilisateur (par exemple, de la session)
+#         return JsonResponse({"message": "Déconnexion réussie"}, status=status.HTTP_200_OK)
+    
+class ProfileAPIView(RetrieveAPIView):
+    serializer_class = AdminSerializer
+
+    def get_object(self):
+        admin_id = self.request.data.get('admin_id')
+        admin = Admins.objects.get(id=admin_id)
+        return admin
