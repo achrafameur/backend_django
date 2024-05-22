@@ -76,18 +76,15 @@ class ConnexionAPIView(APIView):
                 return JsonResponse({"message": "Mot de passe incorrect"}, status=status.HTTP_400_BAD_REQUEST)
         except Admins.DoesNotExist:
             return JsonResponse({"message": "Aucun utilisateur trouvé avec cet e-mail"}, status=status.HTTP_400_BAD_REQUEST)
-
-# class LogoutAPIView(APIView):
-#     # permission_classes = [IsAuthenticated]
-
-#     def post(self, request):
-#         # Supprimer le token de l'utilisateur (par exemple, de la session)
-#         return JsonResponse({"message": "Déconnexion réussie"}, status=status.HTTP_200_OK)
     
-class ProfileAPIView(RetrieveAPIView):
+class ProfileAPIView(APIView):
     serializer_class = AdminSerializer
 
-    def get_object(self):
-        admin_id = self.request.data.get('admin_id')
-        admin = Admins.objects.get(id=admin_id)
-        return admin
+    def post(self, request, *args, **kwargs):
+        admin_id = request.data.get('admin_id')
+        try:
+            admin = Admins.objects.get(id=admin_id)
+            serializer = self.serializer_class(admin)
+            return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+        except Admins.DoesNotExist:
+            return JsonResponse({'error': 'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
