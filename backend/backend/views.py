@@ -12,14 +12,12 @@ from django.http import HttpResponse
 from django.utils.html import escape
 import html
 from environ import Env
-from pfe.models import Clients, Admins
-from backend.serializers import ClientsSerializer, AdminSerializer
+from pfe.models import Admins
+from backend.serializers import AdminSerializer
 from django.contrib.auth.hashers import make_password, check_password
 import jwt
 from datetime import datetime, timedelta
 from django.conf import settings
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.generics import RetrieveAPIView
 
 
 env = Env()
@@ -27,15 +25,6 @@ env.read_env()
 
 def salutView(request):
     return HttpResponse('Salut les gens')
-
-class GetAllClientsAPIView(APIView):
-    def post(self, request):
-        try :
-            clients = Clients.objects.all()
-            serializer = ClientsSerializer(clients, many=True)
-            return JsonResponse({ 'clients': serializer.data }, safe=False)
-        except:
-            return JsonResponse({"msg": "Error while getting the courses"}, status=status.HTTP_400_BAD_REQUEST)
         
 class InscriptionAPIView(APIView):
     def post(self, request):
@@ -88,3 +77,53 @@ class ProfileAPIView(APIView):
             return JsonResponse(serializer.data, status=status.HTTP_200_OK)
         except Admins.DoesNotExist:
             return JsonResponse({'error': 'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+class UpdateAdminAPIView(APIView):
+    # authentication_classes = [CustomAuthentication]
+
+    def put(self, request, admin_id):
+        try:
+            admin = Admins.objects.get(id=admin_id)
+        except Admins.DoesNotExist:
+            return JsonResponse({"message": "Admin not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = AdminSerializer(admin, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse({"message": "Admin updated successfully"})
+        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class DeleteAdminAPIView(APIView):
+    # authentication_classes = [CustomAuthentication]
+
+    def delete(self, request, admin_id):
+        try:
+            admin = Admins.objects.get(id=admin_id)
+            admin.delete()
+            return JsonResponse({"message": "Admin deleted successfully"})
+        except Admins.DoesNotExist:
+            return JsonResponse({"message": "Admin not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+class GetSuperAdminsAPIView(APIView):
+    # authentication_classes = [CustomAuthentication]
+
+    def get(self, request):
+        super_admins = Admins.objects.filter(id_service=0)
+        serializer = AdminSerializer(super_admins, many=True)
+        return JsonResponse(serializer.data, safe=False)
+    
+class GetClientsAPIView(APIView):
+    # authentication_classes = [CustomAuthentication]
+
+    def get(self, request):
+        clients = Admins.objects.filter(id_service=1)
+        serializer = AdminSerializer(clients, many=True)
+        return JsonResponse(serializer.data, safe=False)
+    
+class GetProfessionnelsAPIView(APIView):
+    # authentication_classes = [CustomAuthentication]
+
+    def get(self, request):
+        professionnels = Admins.objects.filter(id_service=2)
+        serializer = AdminSerializer(professionnels, many=True)
+        return JsonResponse(serializer.data, safe=False)

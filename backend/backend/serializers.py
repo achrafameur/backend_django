@@ -1,11 +1,6 @@
-from pfe.models import Clients, Admins
+from pfe.models import Admins
 from rest_framework.serializers import ModelSerializer, CharField, SerializerMethodField, IntegerField
 
-
-class ClientsSerializer(ModelSerializer):
-    class Meta:
-        model = Clients
-        fields = '__all__'
 
 class AdminSerializer(ModelSerializer):
     class Meta:

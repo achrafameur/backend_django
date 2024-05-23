@@ -17,14 +17,18 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from backend.views import salutView
-from backend.views import GetAllClientsAPIView, InscriptionAPIView, ConnexionAPIView, ProfileAPIView
+from backend.views import InscriptionAPIView, ConnexionAPIView, ProfileAPIView, UpdateAdminAPIView, DeleteAdminAPIView, GetSuperAdminsAPIView, GetClientsAPIView,\
+    GetProfessionnelsAPIView
 
 urlpatterns = [
     path('salut/', salutView),
     # path('admin/', admin.site.urls),
-    path('api/clients/getAll/', GetAllClientsAPIView.as_view()),
     path('api/inscription/', InscriptionAPIView.as_view(), name='inscription'),
     path('api/connexion/', ConnexionAPIView.as_view(), name='connexion'),
     path('api/profile/', ProfileAPIView.as_view(), name='profile'),
-    # path('api/logout/', LogoutAPIView.as_view(), name='logout'),
+    path('admin/update/<int:admin_id>/', UpdateAdminAPIView.as_view(), name='update-admin'),
+    path('admin/delete/<int:admin_id>/', DeleteAdminAPIView.as_view(), name='delete-admin'),
+    path('admins/super_admins/', GetSuperAdminsAPIView.as_view(), name='get-super-admins'),
+    path('admins/clients/', GetClientsAPIView.as_view(), name='get-clients'),
+    path('admins/professionnels/', GetProfessionnelsAPIView.as_view(), name='get-professionnels'),
 ]

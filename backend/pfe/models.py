@@ -3,22 +3,6 @@ from django.contrib.auth.models import AbstractUser, AbstractBaseUser
 from django.utils import timezone
 from pfe.managers import CustomUserManager
 
-class Clients(models.Model):
-    # CharField correspond à un varchar max 255
-    firstname = models.fields.CharField(max_length=50)
-    lastname = models.fields.CharField(max_length=50)
-    email = models.EmailField(unique=True)
-    password = models.fields.CharField(max_length=100, default=None, blank=True, null=True)
-    is_mail_sent_credentials = models.fields.IntegerField(default=0)
-    accepted_conditions= models.fields.IntegerField(default=0)
-    username = None
-
-    # pour renommer la table en BDD
-    class Meta:
-        db_table = "clients"
-        indexes = [
-            models.Index(fields=['password'], name='password_idx'),
-        ]
 class Admins(models.Model):
     id = models.AutoField(primary_key=True)
     nom = models.CharField(max_length=255, null=True, blank=True)
