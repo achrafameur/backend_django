@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, AbstractBaseUser
 from django.utils import timezone
 from pfe.managers import CustomUserManager
+from cloudinary.models import CloudinaryField
+
 
 class Admins(models.Model):
     id = models.AutoField(primary_key=True)
@@ -16,6 +18,16 @@ class Admins(models.Model):
 
     class Meta:
         db_table = "admins"
+class Menu(models.Model):
+    admin = models.ForeignKey(Admins, on_delete=models.CASCADE, related_name='menus')
+    nom = models.CharField(max_length=100)
+    description = models.TextField()
+    image = CloudinaryField('image', blank=True, null=True)
+    prix = models.DecimalField(max_digits=10, decimal_places=2)
+    number_dispo = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = "menus"
 
 class Token(models.Model):
     token = models.fields.TextField()

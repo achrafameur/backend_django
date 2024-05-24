@@ -11,13 +11,19 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+import cloudinary
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
+# Chemin où les fichiers téléchargés seront stockés
+MEDIA_URL = 'https://res.cloudinary.com/dubrka8it/image/upload/pfe/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-evnq)#=15zdwqzg49=9k5ddb-wnzwz3&&4=miertau3ps193bc'
@@ -31,6 +37,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'cloudinary',
+    'cloudinary_storage',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,8 +47,23 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'pfe',
-    'corsheaders',
+    'corsheaders',    
 ]
+
+# CLOUDINARY_STORAGE = {
+#     'CLOUD_NAME': 'dubrka8it',
+#     'API_KEY': '327644349791143',
+#     'API_SECRET': 'OqABP6F2SZA2SAX4QE-Ae3pi6zM',
+#     'FOLDER': 'pfe',
+# }
+cloudinary.config(
+cloud_name = 'dubrka8it',
+api_key = '327644349791143',
+api_secret = 'OqABP6F2SZA2SAX4QE-Ae3pi6zM',
+folder = 'pfe'
+)
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

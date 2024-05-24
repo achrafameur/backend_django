@@ -12,12 +12,13 @@ from django.http import HttpResponse
 from django.utils.html import escape
 import html
 from environ import Env
-from pfe.models import Admins
-from backend.serializers import AdminSerializer
+from pfe.models import Admins, Menu
+from backend.serializers import AdminSerializer, MenuSerializer
 from django.contrib.auth.hashers import make_password, check_password
 import jwt
 from datetime import datetime, timedelta
 from django.conf import settings
+from rest_framework.parsers import MultiPartParser, FormParser
 
 
 env = Env()
@@ -127,3 +128,71 @@ class GetProfessionnelsAPIView(APIView):
         professionnels = Admins.objects.filter(id_service=2)
         serializer = AdminSerializer(professionnels, many=True)
         return JsonResponse(serializer.data, safe=False)
+    
+
+class AddMenuAPIView(APIView):
+    # authentication_classes = [CustomAuthentication]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        serializer = MenuSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
+        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UpdateMenuAPIView(APIView):
+    # authentication_classes = [CustomAuthentication]
+
+    def put(self, request, menu_id):
+        try:
+            menu = Menu.objects.get(id=menu_id)
+        except Menu.DoesNotExist:
+            return JsonResponse({"message": "Menu not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = MenuSerializer(menu, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data)
+        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteMenuAPIView(APIView):
+    # authentication_classes = [CustomAuthentication]
+
+    def delete(self, request, menu_id):
+        try:
+            menu = Menu.objects.get(id=menu_id)
+            menu.delete()
+            return JsonResponse({"message": "Menu deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        except Menu.DoesNotExist:
+            return JsonResponse({"message": "Menu not found"}, status=status.HTTP_404_NOT_FOUND)
+
+class GetMenusByAdminAPIView(APIView):
+    # authentication_classes = [CustomAuthentication]
+
+    def get(self, request, admin_id):
+        try:
+            admin = Admins.objects.get(id=admin_id)
+            menus = Menu.objects.filter(admin=admin)
+            serializer = MenuSerializer(menus, many=True)
+            return JsonResponse(serializer.data, safe=False)
+        except Admins.DoesNotExist:
+            return JsonResponse({"message": "Admin not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+class GetAllMenusAPIView(APIView):
+    # authentication_classes = [CustomAuthentication]
+
+    def get(self, request):
+        menus = Menu.objects.all()
+        serializer = MenuSerializer(menus, many=True)
+        return JsonResponse(serializer.data, safe=False)
+    
+
+class MenuDetailAPIView(APIView):
+    def get(self, request, menu_id):
+        try:
+            menu = Menu.objects.get(id=menu_id)
+            serializer = MenuSerializer(menu)
+            return JsonResponse(serializer.data, safe=False)
+        except Menu.DoesNotExist:
+            return JsonResponse({"message": "Menu not found"}, status=status.HTTP_404_NOT_FOUND)

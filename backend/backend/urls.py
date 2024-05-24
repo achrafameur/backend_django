@@ -17,8 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from backend.views import salutView
+from django.conf import settings
+from django.conf.urls.static import static
 from backend.views import InscriptionAPIView, ConnexionAPIView, ProfileAPIView, UpdateAdminAPIView, DeleteAdminAPIView, GetSuperAdminsAPIView, GetClientsAPIView,\
-    GetProfessionnelsAPIView
+    GetProfessionnelsAPIView, AddMenuAPIView, UpdateMenuAPIView, DeleteMenuAPIView, GetMenusByAdminAPIView, GetAllMenusAPIView, MenuDetailAPIView
 
 urlpatterns = [
     path('salut/', salutView),
@@ -31,4 +33,13 @@ urlpatterns = [
     path('admins/super_admins/', GetSuperAdminsAPIView.as_view(), name='get-super-admins'),
     path('admins/clients/', GetClientsAPIView.as_view(), name='get-clients'),
     path('admins/professionnels/', GetProfessionnelsAPIView.as_view(), name='get-professionnels'),
+    path('menu/add/', AddMenuAPIView.as_view(), name='add-menu'),
+    path('menu/update/<int:menu_id>/', UpdateMenuAPIView.as_view(), name='update-menu'),
+    path('menu/delete/<int:menu_id>/', DeleteMenuAPIView.as_view(), name='delete-menu'),
+    path('admin/<int:admin_id>/menus/', GetMenusByAdminAPIView.as_view(), name='get-menus-by-admin'),
+    path('menus/', GetAllMenusAPIView.as_view(), name='get-all-menus'),
+    path('menu/<int:menu_id>/', MenuDetailAPIView.as_view(), name='menu_detail'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

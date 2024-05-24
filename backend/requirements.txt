@@ -113,3 +113,5 @@ xarray==2023.7.0
 yarl==1.9.2
 zipp==3.16.2
 zope.interface==6.2
+django-cloudinary-storage
+cloudinary
