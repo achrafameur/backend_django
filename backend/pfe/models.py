@@ -15,6 +15,7 @@ class Admins(models.Model):
     password = models.CharField(max_length=255)
     id_service = models.IntegerField(choices=[(0, 'super_admin'), (1, 'client'), (2, 'professionnel')])
     is_verification_mail_set = models.BooleanField(default=False)
+    avatar = CloudinaryField('avatar', blank=True, null=True)
 
     class Meta:
         db_table = "admins"
