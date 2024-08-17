@@ -19,9 +19,10 @@ from django.urls import path
 from backend.views import salutView
 from django.conf import settings
 from django.conf.urls.static import static
-from backend.views import InscriptionAPIView, ConnexionAPIView, ProfileAPIView, UpdateAdminAPIView, DeleteAdminAPIView, GetSuperAdminsAPIView, GetClientsAPIView,\
-    GetProfessionnelsAPIView, AddMenuAPIView, UpdateMenuAPIView, DeleteMenuAPIView, GetMenusByAdminAPIView, GetAllMenusAPIView, MenuDetailAPIView, \
-    ProfessionnelSearchAPIView, ClientsSearchAPIView, AdminsSearchAPIView
+from backend.views import InscriptionAPIView, ConnexionAPIView, ProfileAPIView, UpdateAdminAPIView, DeleteAdminAPIView, \
+    GetSuperAdminsAPIView, GetClientsAPIView,GetProfessionnelsAPIView, AddMenuAPIView, UpdateMenuAPIView, DeleteMenuAPIView, \
+    GetMenusByAdminAPIView, GetAllMenusAPIView, MenuDetailAPIView, ProfessionnelSearchAPIView, ClientsSearchAPIView, \
+    AdminsSearchAPIView
 
 urlpatterns = [
     path('salut/', salutView),
@@ -44,7 +45,6 @@ urlpatterns = [
     path('admins/search_clients/', ClientsSearchAPIView.as_view(), name='search-professionnels'),
     path('admins/search_super_admins/', AdminsSearchAPIView.as_view(), name='search-professionnels'),
 ]
-
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

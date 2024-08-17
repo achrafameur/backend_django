@@ -21,7 +21,6 @@ from django.conf import settings
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q
 
-
 env = Env()
 env.read_env()
 
@@ -29,15 +28,14 @@ def salutView(request):
     return HttpResponse('Salut les gens')
         
 class InscriptionAPIView(APIView):
-    parser_classes = [MultiPartParser, FormParser]
     def post(self, request):
         serializer = AdminSerializer(data=request.data)
         if serializer.is_valid():
-            # Hachage du mot de passe avant de le sauvegarder dans la base de données
-            hashed_password = make_password(serializer.validated_data['password'])
-            serializer.validated_data['password'] = hashed_password
-            admin = serializer.save()
-            return JsonResponse({"message": "Inscription réussie", "admin_id": admin.id})
+                # Hachage du mot de passe avant de le sauvegarder dans la base de données
+                hashed_password = make_password(serializer.validated_data['password'])
+                serializer.validated_data['password'] = hashed_password
+                admin = serializer.save()
+                return JsonResponse({"message": "Inscription réussie", "admin_id": admin.id})
         return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ConnexionAPIView(APIView):

@@ -14,27 +14,39 @@ from pathlib import Path
 import os
 import cloudinary
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-# BASE_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-# Chemin où les fichiers téléchargés seront stockés
 MEDIA_URL = 'https://res.cloudinary.com/dubrka8it/image/upload/pfe/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-evnq)#=15zdwqzg49=9k5ddb-wnzwz3&&4=miertau3ps193bc'
+
+
+cloudinary.config(
+cloud_name = 'dubrka8it',
+api_key = '327644349791143',
+api_secret = 'OqABP6F2SZA2SAX4QE-Ae3pi6zM',
+folder = 'pfe'
+)
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'pfe',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'init_command': 'SET default_storage_engine=INNODB',
+        },
+    }
+}
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
-
-# Application definition
 
 INSTALLED_APPS = [
     'cloudinary',
@@ -50,18 +62,6 @@ INSTALLED_APPS = [
     'corsheaders',    
 ]
 
-# CLOUDINARY_STORAGE = {
-#     'CLOUD_NAME': 'dubrka8it',
-#     'API_KEY': '327644349791143',
-#     'API_SECRET': 'OqABP6F2SZA2SAX4QE-Ae3pi6zM',
-#     'FOLDER': 'pfe',
-# }
-cloudinary.config(
-cloud_name = 'dubrka8it',
-api_key = '327644349791143',
-api_secret = 'OqABP6F2SZA2SAX4QE-Ae3pi6zM',
-folder = 'pfe'
-)
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
@@ -110,20 +110,6 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pfe',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'OPTIONS': {
-            'init_command': 'SET default_storage_engine=INNODB',
-        },
-    }
-}
 
 
 # Password validation
