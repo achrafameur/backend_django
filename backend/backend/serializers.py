@@ -1,4 +1,4 @@
-from pfe.models import Admins, Menu
+from backend.models import Admins, Menu
 from rest_framework.serializers import ModelSerializer, CharField, SerializerMethodField, IntegerField
 
 

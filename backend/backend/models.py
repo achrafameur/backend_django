@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, AbstractBaseUser
 from django.utils import timezone
-from pfe.managers import CustomUserManager
+from backend.managers import CustomUserManager
 from cloudinary.models import CloudinaryField
 
 
