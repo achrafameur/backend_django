@@ -25,9 +25,6 @@ env = Env()
 env.read_env()
   
 class UpdateAdminAPIView(APIView):
-    # authentication_classes = [CustomAuthentication]
-    parser_classes = [MultiPartParser, FormParser]
-
     def put(self, request, admin_id):
         try:
             admin = Admins.objects.get(id=admin_id)
@@ -45,8 +42,6 @@ class UpdateAdminAPIView(APIView):
         return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class DeleteAdminAPIView(APIView):
-    # authentication_classes = [CustomAuthentication]
-
     def delete(self, request, admin_id):
         try:
             admin = Admins.objects.get(id=admin_id)
@@ -56,32 +51,24 @@ class DeleteAdminAPIView(APIView):
             return JsonResponse({"message": "Admin not found"}, status=status.HTTP_404_NOT_FOUND)
         
 class GetSuperAdminsAPIView(APIView):
-    # authentication_classes = [CustomAuthentication]
-
     def get(self, request):
         super_admins = Admins.objects.filter(id_service=0)
         serializer = AdminSerializer(super_admins, many=True)
         return JsonResponse(serializer.data, safe=False)
     
 class GetClientsAPIView(APIView):
-    # authentication_classes = [CustomAuthentication]
-
     def get(self, request):
         clients = Admins.objects.filter(id_service=1)
         serializer = AdminSerializer(clients, many=True)
         return JsonResponse(serializer.data, safe=False)
     
 class GetProfessionnelsAPIView(APIView):
-    # authentication_classes = [CustomAuthentication]
-
     def get(self, request):
         professionnels = Admins.objects.filter(id_service=2)
         serializer = AdminSerializer(professionnels, many=True)
         return JsonResponse(serializer.data, safe=False)
 
 class GetMenusByAdminAPIView(APIView):
-    # authentication_classes = [CustomAuthentication]
-
     def get(self, request, admin_id):
         try:
             admin = Admins.objects.get(id=admin_id)
