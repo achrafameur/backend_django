@@ -5,7 +5,7 @@ from professionnel.views import AddMenuAPIView, UpdateMenuAPIView, DeleteMenuAPI
     GetAllMenusAPIView, MenuDetailAPIView
 
 urlpatterns = [
-   path('menu/add/', AddMenuAPIView.as_view(), name='add-menu'),
+    path('menu/add/', AddMenuAPIView.as_view(), name='add-menu'),
     path('menu/update/<int:menu_id>/', UpdateMenuAPIView.as_view(), name='update-menu'),
     path('menu/delete/<int:menu_id>/', DeleteMenuAPIView.as_view(), name='delete-menu'),
     path('menus/', GetAllMenusAPIView.as_view(), name='get-all-menus'),
