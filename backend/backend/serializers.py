@@ -46,3 +46,9 @@ class CommandeSerializer(ModelSerializer):
     class Meta:
         model = Commande
         fields = ['id', 'utilisateur', 'panier', 'reference', 'date_commande', 'montant_total', 'est_payee']
+
+class RestaurantSeats(ModelSerializer):
+    
+    class Meta:
+        model = Commande
+        fields = ['id', 'restaurant', 'available_seats']

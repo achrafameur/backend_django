@@ -34,6 +34,7 @@ class Menu(models.Model):
     image = CloudinaryField('image', blank=True, null=True)
     prix = models.DecimalField(max_digits=10, decimal_places=2)
     number_dispo = models.PositiveIntegerField(default=0)
+    is_approuved = models.BooleanField(default=False)
 
     class Meta:
         db_table = "menus"
@@ -92,6 +93,13 @@ class Commande(models.Model):
 
     class Meta:
         db_table = "commande"
+
+class RestaurantSeats(models.Model):
+    restaurant = models.ForeignKey(Admins, on_delete=models.CASCADE)
+    available_seats = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "restaurant_seats"
 
 class Token(models.Model):
     token = models.fields.TextField()
