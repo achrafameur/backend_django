@@ -65,8 +65,23 @@ class GetClientsAPIView(APIView):
 class GetProfessionnelsAPIView(APIView):
     def get(self, request):
         professionnels = Admins.objects.filter(id_service=2)
-        serializer = AdminSerializer(professionnels, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        professionnel_data = []
+
+        for professionnel in professionnels:
+            # Serialize the professional's data
+            serializer = AdminSerializer(professionnel)
+            data = serializer.data
+            
+            # Get the related menus
+            menus = Menu.objects.filter(admin=professionnel)
+            menu_serializer = MenuSerializer(menus, many=True)
+            
+            # Add the menus to the professional's data
+            data['menus'] = menu_serializer.data
+            professionnel_data.append(data)
+
+        return JsonResponse(professionnel_data, safe=False, status=status.HTTP_200_OK)
+
 
 class GetMenusByAdminAPIView(APIView):
     def get(self, request, admin_id):

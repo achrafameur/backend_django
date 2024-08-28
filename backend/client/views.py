@@ -1,7 +1,7 @@
 from django.shortcuts import render
 # Create your views here.
 from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier, PanierItem, Commande
-from backend.serializers import FavorisRestaurantSerializer, FavorisMenuSerializer, PanierItemSerializer, PanierSerializer
+from backend.serializers import MenuSerializer, FavorisRestaurantSerializer, FavorisMenuSerializer, PanierItemSerializer, PanierSerializer
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework import status
@@ -50,13 +50,20 @@ class GetAllFavorisRestaurantsAPIView(APIView):
         utilisateur_id = request.query_params.get('user_id')
         if not utilisateur_id:
             return JsonResponse({'message': 'User ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
             user = Admins.objects.get(id=utilisateur_id, id_service=1)
         except Admins.DoesNotExist:
             return JsonResponse({'message': 'Invalid user ID'}, status=status.HTTP_404_NOT_FOUND)
+        
         favoris_restaurants = FavorisRestaurant.objects.filter(user=user)
-        serializer = FavorisRestaurantSerializer(favoris_restaurants, many=True)
+        restaurant_ids = favoris_restaurants.values_list('restaurant_id', flat=True)
+        
+        restaurants = Menu.objects.filter(id__in=restaurant_ids)
+        serializer = MenuSerializer(restaurants, many=True)
+        
         return JsonResponse(serializer.data, safe=False)
+
 
 # Gestion des menus favoris     
 class AddFavorisMenuAPIView(APIView):
@@ -100,13 +107,20 @@ class GetAllFavorisMenusAPIView(APIView):
         utilisateur_id = request.query_params.get('user_id')
         if not utilisateur_id:
             return JsonResponse({'message': 'User ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
             user = Admins.objects.get(id=utilisateur_id, id_service=1)
         except Admins.DoesNotExist:
             return JsonResponse({'message': 'Invalid user ID'}, status=status.HTTP_404_NOT_FOUND)
+        
         favoris_menus = FavorisMenu.objects.filter(user=user)
-        serializer = FavorisMenuSerializer(favoris_menus, many=True)
+        menu_ids = favoris_menus.values_list('menu_id', flat=True)
+        
+        menus = Menu.objects.filter(id__in=menu_ids)
+        serializer = MenuSerializer(menus, many=True)
+        
         return JsonResponse(serializer.data, safe=False)
+
     
 # Gestion du Panier
 class AddToPanierAPIView(APIView):

@@ -21,6 +21,8 @@ from django.conf import settings
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q
 
+from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier, PanierItem, Commande
+
 env = Env()
 env.read_env()
 
@@ -62,13 +64,31 @@ class DeleteMenuAPIView(APIView):
             return JsonResponse({"message": "Menu not found"}, status=status.HTTP_404_NOT_FOUND)
      
 class GetAllMenusAPIView(APIView):
-    # authentication_classes = [CustomAuthentication]
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return JsonResponse({'message': 'User ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-    def get(self, request):
+        try:
+            user = Admins.objects.get(id=user_id, id_service=1)
+        except Admins.DoesNotExist:
+            return JsonResponse({'message': 'Invalid user ID'}, status=status.HTTP_404_NOT_FOUND)
+
         menus = Menu.objects.all()
-        serializer = MenuSerializer(menus, many=True)
-        return JsonResponse(serializer.data, safe=False)
-    
+        favoris_menus = FavorisMenu.objects.filter(user=user).values_list('menu_id', flat=True)
+        favoris_restaurants = FavorisRestaurant.objects.filter(user=user).values_list('restaurant_id', flat=True)
+
+        menu_data = []
+        for menu in menus:
+            menu_dict = {
+                **MenuSerializer(menu).data,
+                'is_favoris_menu': menu.id in favoris_menus,
+                'is_favoris_restaurant': menu.id in favoris_restaurants
+            }
+            menu_data.append(menu_dict)
+
+        return JsonResponse(menu_data, safe=False)
+
 class MenuDetailAPIView(APIView):
     def get(self, request, menu_id):
         try:

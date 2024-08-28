@@ -28,6 +28,7 @@ class Admins(models.Model):
 
 class Menu(models.Model):
     admin = models.ForeignKey(Admins, on_delete=models.CASCADE, related_name='menus')
+    nom_organisme = models.CharField(max_length=255, null=True, blank=True)
     nom = models.CharField(max_length=100)
     description = models.TextField()
     image = CloudinaryField('image', blank=True, null=True)
@@ -36,6 +37,12 @@ class Menu(models.Model):
 
     class Meta:
         db_table = "menus"
+
+    def save(self, *args, **kwargs):
+        if self.admin:
+            self.nom_organisme = self.admin.nom_organisme
+        super().save(*args, **kwargs)
+        
 
 class FavorisRestaurant(models.Model):
     user = models.ForeignKey(Admins, on_delete=models.CASCADE, related_name='favoris_restaurants')
