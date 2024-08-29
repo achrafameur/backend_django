@@ -6,6 +6,14 @@ from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework import status
 import uuid
+import stripe
+from django.conf import settings
+from django.http import HttpResponse
+import logging
+logger = logging.getLogger(__name__)
+
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # Gestion des restaurants favoris
 class AddFavorisRestaurantAPIView(APIView):
@@ -211,3 +219,78 @@ class ValidatePanierAPIView(APIView):
             return JsonResponse({"reference": reference, "montant_total": total}, status=status.HTTP_201_CREATED)
         except Panier.DoesNotExist:
             return JsonResponse({"error": "Panier not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+class CreateCheckoutSessionAPIView(APIView):
+    def post(self, request):
+        try:
+            reference = request.data.get('reference')
+            if not reference:
+                return JsonResponse({"error": "Reference is required"}, status=400)
+            
+            commande = Commande.objects.get(reference=reference)
+            
+            # Créer une session de paiement Stripe
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[
+                    {
+                        'price_data': {
+                            'currency': 'eur',
+                            'product_data': {
+                                'name': f"Commande {commande.reference}",
+                            },
+                            'unit_amount': int(commande.montant_total * 100),
+                        },
+                        'quantity': 1,
+                    },
+                ],
+                mode='payment',
+                success_url="http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}",
+                cancel_url="http://localhost:3000/cancel",
+                client_reference_id=reference, 
+            )
+            
+            # Retourner l'URL de la session Stripe
+            return JsonResponse({"url": checkout_session.url})
+        
+        except Commande.DoesNotExist:
+            return JsonResponse({"error": "Commande not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+        
+
+class StripeWebhookView(APIView):
+    def post(self, request):
+
+        payload = request.body
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+        endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
+
+        if not sig_header:
+            return HttpResponse("Missing signature header", status=400)
+
+        try:
+            event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        except ValueError as e:
+            return HttpResponse("Invalid payload", status=400)
+        except stripe.error.SignatureVerificationError as e:
+            return HttpResponse("Invalid signature", status=400)
+
+        # Handle the event
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+            client_reference_id = session.get('client_reference_id')
+
+            if not client_reference_id:
+                return HttpResponse("client_reference_id is None", status=400)
+
+            try:
+                commande = Commande.objects.get(reference=client_reference_id)
+                commande.est_payee = True
+                commande.save()
+            except Commande.DoesNotExist:
+                return HttpResponse(f"Commande with reference {client_reference_id} does not exist.", status=404)
+
+        return HttpResponse(status=200)

@@ -34,7 +34,7 @@ class Menu(models.Model):
     image = CloudinaryField('image', blank=True, null=True)
     prix = models.DecimalField(max_digits=10, decimal_places=2)
     number_dispo = models.PositiveIntegerField(default=0)
-    is_approuved = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=False)
     is_declined = models.BooleanField(default=False)
     approved_by = models.ForeignKey(Admins, on_delete=models.CASCADE, null=True, blank=True, related_name='approved_menus')
 

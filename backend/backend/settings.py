@@ -21,6 +21,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 SECRET_KEY = 'django-insecure-evnq)#=15zdwqzg49=9k5ddb-wnzwz3&&4=miertau3ps193bc'
 
+STRIPE_SECRET_KEY = "sk_test_51PropRJAp0s6zgdYh6Uag7wmTQYhpsnXIrxHO1BiY4xg5J2MOAvPj8lwuDTpYOoTeJuHSbjUrpa5H4RQilQ9S0UP003cWurqVQ"
+STRIPE_PUBLISHABLE_KEY = "pk_test_51PropRJAp0s6zgdY4E8pUBDFaSt8mTzhQUycJzjB8sSrLIuWEHl1i5QqGa71pTdb4aeYxRYChXchoncbQmyzonCP00R5roU6cM"
+STRIPE_WEBHOOK_SECRET = "whsec_94lRYkqgSM3t3Lk6jJee1mfD3CZnNsP6"
+
 
 cloudinary.config(
 cloud_name = 'dubrka8it',
@@ -49,7 +53,7 @@ DATABASES = {
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['2299-2001-861-6750-4620-c049-fab7-1378-18d6.ngrok-free.app', 'localhost']
 
 INSTALLED_APPS = [
     'cloudinary',
