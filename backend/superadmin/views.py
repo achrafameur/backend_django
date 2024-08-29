@@ -136,7 +136,7 @@ class AdminsSearchAPIView(APIView):
     
 class PendingMenusListAPIView(APIView):
     def get(self, request):
-        pending_menus = Menu.objects.filter(is_approuved=False, is_declined=False)
+        pending_menus = Menu.objects.filter(is_approved=False, is_declined=False)
         serializer = MenuSerializer(pending_menus, many=True)
         return JsonResponse(serializer.data, safe=False)
 
@@ -161,10 +161,10 @@ class ApproveDeclineMenuAPIView(APIView):
             return JsonResponse({'error': 'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
 
         if action == 'approve':
-            menu.is_approuved = True
+            menu.is_approved = True
             menu.is_declined = False
         elif action == 'decline':
-            menu.is_approuved = False
+            menu.is_approved = False
             menu.is_declined = True
         else:
             return JsonResponse({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from .views import AddFavorisRestaurantAPIView, DeleteFavorisRestaurantAPIView, GetAllFavorisRestaurantsAPIView, \
     AddFavorisMenuAPIView, DeleteFavorisMenuAPIView, GetAllFavorisMenusAPIView, AddToPanierAPIView, UpdatePanierItemAPIView, \
-    DeletePanierItemAPIView, ValidatePanierAPIView, GetPanierAPIView
+    DeletePanierItemAPIView, ValidatePanierAPIView, GetPanierAPIView, CreateCheckoutSessionAPIView, StripeWebhookView
 
 urlpatterns = [
     # Verified
@@ -21,4 +21,6 @@ urlpatterns = [
     path('panier/delete/<int:item_id>/', DeletePanierItemAPIView.as_view(), name='delete-panier-item'),
     path('panier/validate/', ValidatePanierAPIView.as_view(), name='validate-panier'),
     path('panier/', GetPanierAPIView.as_view(), name='get-panier'),
+    path('create-checkout-session/', CreateCheckoutSessionAPIView.as_view(), name='create-checkout-session'),
+    path('stripe-webhook/', StripeWebhookView.as_view(), name='stripe-webhook'),
 ]
