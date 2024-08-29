@@ -133,3 +133,45 @@ class AdminsSearchAPIView(APIView):
             serializer = AdminSerializer(admins, many=True)
             return JsonResponse(serializer.data,safe=False , status=status.HTTP_200_OK)
         return JsonResponse({"message": "No query provided"}, status=status.HTTP_400_BAD_REQUEST)
+    
+class PendingMenusListAPIView(APIView):
+    def get(self, request):
+        pending_menus = Menu.objects.filter(is_approuved=False, is_declined=False)
+        serializer = MenuSerializer(pending_menus, many=True)
+        return JsonResponse(serializer.data, safe=False)
+
+
+class ApproveDeclineMenuAPIView(APIView):
+    def post(self, request):
+        menu_id = request.data.get('menu_id')
+        action = request.data.get('action')
+        admin_id = request.data.get('admin_id')
+
+        if not menu_id or not action or not admin_id:
+            return JsonResponse({'error': 'Menu ID, action, and admin ID are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            menu = Menu.objects.get(id=menu_id)
+        except Menu.DoesNotExist:
+            return JsonResponse({'error': 'Menu not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            admin = Admins.objects.get(id=admin_id)
+        except Admins.DoesNotExist:
+            return JsonResponse({'error': 'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if action == 'approve':
+            menu.is_approuved = True
+            menu.is_declined = False
+        elif action == 'decline':
+            menu.is_approuved = False
+            menu.is_declined = True
+        else:
+            return JsonResponse({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
+
+        menu.approved_by = admin
+        menu.save()
+
+        return JsonResponse({'message': f'Menu has been {action}d by Admin ID {admin_id}'}, status=status.HTTP_200_OK)
+
+

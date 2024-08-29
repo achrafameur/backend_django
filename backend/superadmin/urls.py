@@ -4,7 +4,7 @@ from django.urls import path, include
 from superadmin.views import UpdateAdminAPIView, DeleteAdminAPIView, \
     GetSuperAdminsAPIView, GetClientsAPIView, GetProfessionnelsAPIView, \
     GetMenusByAdminAPIView, ProfessionnelSearchAPIView, ClientsSearchAPIView, \
-    AdminsSearchAPIView
+    AdminsSearchAPIView, PendingMenusListAPIView, ApproveDeclineMenuAPIView
 
 urlpatterns = [
     path('admin/update/<int:admin_id>/', UpdateAdminAPIView.as_view(), name='update-admin'),
@@ -16,4 +16,6 @@ urlpatterns = [
     path('admins/search_professionnels/', ProfessionnelSearchAPIView.as_view(), name='search-professionnels'),
     path('admins/search_clients/', ClientsSearchAPIView.as_view(), name='search-professionnels'),
     path('admins/search_super_admins/', AdminsSearchAPIView.as_view(), name='search-professionnels'),
+    path('pending-menus/', PendingMenusListAPIView.as_view(), name='pending-menus-list'),
+    path('approve-decline-menu/', ApproveDeclineMenuAPIView.as_view(), name='approve-decline-menu'),
 ]

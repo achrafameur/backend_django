@@ -6,12 +6,13 @@ class AdminSerializer(ModelSerializer):
     class Meta:
         model = Admins
         fields = ['id', 'nom', 'prenom', 'nom_organisme', 'num_siret', 'adresse_mail',
-                'id_service', 'is_verification_mail_set', 'avatar', 'localisation']
+                'id_service','avatar', 'localisation']
     
 class MenuSerializer(ModelSerializer):
+    admin = AdminSerializer()
     class Meta:
         model = Menu
-        fields = '__all__'
+        fields = ['id', 'nom_organisme', 'nom', 'description', 'image', 'prix', 'number_dispo', 'is_approuved', 'is_declined', 'admin']
         extra_kwargs = {
             'image': {'required': False}
         }
