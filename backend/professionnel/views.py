@@ -13,7 +13,7 @@ from django.utils.html import escape
 import html
 from environ import Env
 from backend.models import Admins, Menu
-from backend.serializers import AdminSerializer, MenuSerializer
+from backend.serializers import AdminSerializer, MenuSerializer, MenuAddSerializer
 from django.contrib.auth.hashers import make_password, check_password
 import jwt
 from datetime import datetime, timedelta
@@ -28,7 +28,7 @@ env.read_env()
 
 class AddMenuAPIView(APIView):
     def post(self, request):
-        serializer = MenuSerializer(data=request.data)
+        serializer = MenuAddSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)

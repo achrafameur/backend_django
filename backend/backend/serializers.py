@@ -17,6 +17,14 @@ class MenuSerializer(ModelSerializer):
             'image': {'required': False}
         }
 
+class MenuAddSerializer(ModelSerializer):
+    class Meta:
+        model = Menu
+        fields = '__all__'
+        extra_kwargs = {
+            'image': {'required': False}
+        }
+
 class FavorisRestaurantSerializer(ModelSerializer):
     class Meta:
         model = FavorisRestaurant
