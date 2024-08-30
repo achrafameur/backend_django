@@ -115,3 +115,4 @@ zipp==3.16.2
 zope.interface==6.2
 django-cloudinary-storage
 cloudinary
+stripe==10.9.0
