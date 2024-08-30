@@ -27,9 +27,6 @@ env = Env()
 env.read_env()
 
 class AddMenuAPIView(APIView):
-    # authentication_classes = [CustomAuthentication]
-    parser_classes = [MultiPartParser, FormParser]
-
     def post(self, request):
         serializer = MenuSerializer(data=request.data)
         if serializer.is_valid():
@@ -38,8 +35,6 @@ class AddMenuAPIView(APIView):
         return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UpdateMenuAPIView(APIView):
-    # authentication_classes = [CustomAuthentication]
-
     def put(self, request, menu_id):
         try:
             menu = Menu.objects.get(id=menu_id)
@@ -53,8 +48,6 @@ class UpdateMenuAPIView(APIView):
         return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DeleteMenuAPIView(APIView):
-    # authentication_classes = [CustomAuthentication]
-
     def delete(self, request, menu_id):
         try:
             menu = Menu.objects.get(id=menu_id)
