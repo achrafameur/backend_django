@@ -78,6 +78,7 @@ class PanierItem(models.Model):
     panier = models.ForeignKey(Panier, related_name='items', on_delete=models.CASCADE)
     menu = models.ForeignKey(Menu, on_delete=models.CASCADE)
     quantite = models.PositiveIntegerField(default=1)
+    est_payee = models.BooleanField(default=False)
     
     class Meta:
         db_table = "panier_item"

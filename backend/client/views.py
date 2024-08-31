@@ -205,9 +205,23 @@ class ValidatePanierAPIView(APIView):
             return JsonResponse({'error': 'Invalid User ID or User is not a client'}, status=status.HTTP_404_NOT_FOUND)
         try:
             panier = Panier.objects.get(utilisateur=utilisateur)
-            if not panier.items.exists():
-                return JsonResponse({"error": "Panier is empty"}, status=status.HTTP_400_BAD_REQUEST)
-            total = sum(item.total() for item in panier.items.all())
+            items = panier.items.filter(est_payee=False)
+            if not items.exists():
+                return JsonResponse({"error": "Panier is empty or all items are paid"}, status=status.HTTP_400_BAD_REQUEST)
+
+            total = 0
+            items = []
+            total = 0
+            items = []
+            for item in panier.items.all():
+                item_total = item.total()
+                total += item_total
+                items.append({
+                    "id": item.id,
+                    "nom": item.menu.nom,
+                    "quantite": item.quantite
+                })
+
             reference = str(uuid.uuid4())
             commande = Commande.objects.create(
                 utilisateur=utilisateur,
@@ -216,7 +230,11 @@ class ValidatePanierAPIView(APIView):
                 montant_total=total,
                 est_payee=False
             )
-            return JsonResponse({"reference": reference, "montant_total": total}, status=status.HTTP_201_CREATED)
+            return JsonResponse({
+                "reference": reference, 
+                "montant_total": total,
+                "items": items
+            }, status=status.HTTP_201_CREATED)
         except Panier.DoesNotExist:
             return JsonResponse({"error": "Panier not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -290,6 +308,10 @@ class StripeWebhookView(APIView):
                 commande = Commande.objects.get(reference=client_reference_id)
                 commande.est_payee = True
                 commande.save()
+
+                for item in commande.panier.items.all():
+                    item.est_payee = True
+                    item.save()
             except Commande.DoesNotExist:
                 return HttpResponse(f"Commande with reference {client_reference_id} does not exist.", status=404)
 

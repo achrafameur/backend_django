@@ -53,7 +53,7 @@ DATABASES = {
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['2299-2001-861-6750-4620-c049-fab7-1378-18d6.ngrok-free.app', 'localhost']
+ALLOWED_HOSTS = ['3dc6-2001-861-6750-4620-716f-d948-be87-954a.ngrok-free.app', 'localhost']
 
 INSTALLED_APPS = [
     'cloudinary',

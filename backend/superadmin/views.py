@@ -136,7 +136,7 @@ class AdminsSearchAPIView(APIView):
     
 class PendingMenusListAPIView(APIView):
     def get(self, request):
-        pending_menus = Menu.objects.filter(is_approved=False, is_declined=False)
+        pending_menus = Menu.objects.filter(is_approved=False, is_declined=False).exclude(image="image/upload/null")
         serializer = MenuSerializer(pending_menus, many=True)
         return JsonResponse(serializer.data, safe=False)
 
