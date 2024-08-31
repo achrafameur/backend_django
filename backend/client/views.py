@@ -11,7 +11,7 @@ from django.conf import settings
 from django.http import HttpResponse
 import logging
 logger = logging.getLogger(__name__)
-
+from django.shortcuts import get_object_or_404
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -20,23 +20,28 @@ class AddFavorisRestaurantAPIView(APIView):
     def post(self, request):
         utilisateur_id = request.data.get('user_id')
         restaurant_id = request.data.get('restaurant_id')
-        
+   
         if not utilisateur_id or not restaurant_id:
             return JsonResponse({'message': 'User ID and Restaurant ID are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
             restaurant = Admins.objects.get(id=restaurant_id, id_service=2)
         except Admins.DoesNotExist:
             return JsonResponse({'message': 'Invalid restaurant ID'}, status=status.HTTP_404_NOT_FOUND)
+        
         user = Admins.objects.filter(id=utilisateur_id, id_service=1).first()
+
         if not user:
             return JsonResponse({'message': 'Invalid user ID'}, status=status.HTTP_404_NOT_FOUND)
-        # Vérifiez si le restaurant est déjà dans les favoris
+
+        # Check if the restaurant is already in the user's favorites
         favoris, created = FavorisRestaurant.objects.get_or_create(user=user, restaurant=restaurant)
         if not created:
             return JsonResponse({'message': 'Restaurant already in favorites'}, status=status.HTTP_400_BAD_REQUEST)
+        
         serializer = FavorisRestaurantSerializer(favoris)
         return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
-    
+
 class DeleteFavorisRestaurantAPIView(APIView):
     def delete(self, request, restaurant_id):
         utilisateur_id = request.data.get('user_id')
@@ -72,12 +77,12 @@ class GetAllFavorisRestaurantsAPIView(APIView):
         
         return JsonResponse(serializer.data, safe=False)
 
-
 # Gestion des menus favoris     
 class AddFavorisMenuAPIView(APIView):
     def post(self, request):
         utilisateur_id = request.data.get('user_id')
         menu_id = request.data.get('menu_id')
+        
         if not utilisateur_id or not menu_id:
             return JsonResponse({'message': 'User ID and Menu ID are required'}, status=status.HTTP_400_BAD_REQUEST)
         try:
@@ -128,7 +133,6 @@ class GetAllFavorisMenusAPIView(APIView):
         serializer = MenuSerializer(menus, many=True)
         
         return JsonResponse(serializer.data, safe=False)
-
     
 # Gestion du Panier
 class AddToPanierAPIView(APIView):
@@ -238,8 +242,6 @@ class ValidatePanierAPIView(APIView):
         except Panier.DoesNotExist:
             return JsonResponse({"error": "Panier not found"}, status=status.HTTP_404_NOT_FOUND)
 
-
-
 class CreateCheckoutSessionAPIView(APIView):
     def post(self, request):
         try:
@@ -278,7 +280,6 @@ class CreateCheckoutSessionAPIView(APIView):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
         
-
 class StripeWebhookView(APIView):
     def post(self, request):
 
