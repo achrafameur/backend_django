@@ -1,7 +1,7 @@
 from django.shortcuts import render
 # Create your views here.
 from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier, PanierItem, Commande
-from backend.serializers import MenuSerializer, FavorisRestaurantSerializer, FavorisMenuSerializer, PanierItemSerializer, PanierSerializer
+from backend.serializers import MenuSerializer, FavorisRestaurantSerializer, FavorisMenuSerializer, PanierItemSerializer, AdminSerializer
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework import status
@@ -45,6 +45,7 @@ class AddFavorisRestaurantAPIView(APIView):
 class DeleteFavorisRestaurantAPIView(APIView):
     def delete(self, request, restaurant_id):
         utilisateur_id = request.data.get('user_id')
+        print(restaurant_id)
         if not utilisateur_id:
             return JsonResponse({'message': 'User ID is required'}, status=status.HTTP_400_BAD_REQUEST)
         try:
@@ -59,8 +60,9 @@ class DeleteFavorisRestaurantAPIView(APIView):
             return JsonResponse({'message': 'Favorite restaurant not found'}, status=status.HTTP_404_NOT_FOUND)
 
 class GetAllFavorisRestaurantsAPIView(APIView):
-    def get(self, request):
-        utilisateur_id = request.query_params.get('user_id')
+    def post(self, request):
+        utilisateur_id = request.data.get('user_id')
+        print(utilisateur_id)
         if not utilisateur_id:
             return JsonResponse({'message': 'User ID is required'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -69,11 +71,12 @@ class GetAllFavorisRestaurantsAPIView(APIView):
         except Admins.DoesNotExist:
             return JsonResponse({'message': 'Invalid user ID'}, status=status.HTTP_404_NOT_FOUND)
         
-        favoris_restaurants = FavorisRestaurant.objects.filter(user=user)
+        favoris_restaurants = FavorisRestaurant.objects.filter(user_id=utilisateur_id)
+        print(favoris_restaurants)
         restaurant_ids = favoris_restaurants.values_list('restaurant_id', flat=True)
-        
-        restaurants = Menu.objects.filter(id__in=restaurant_ids)
-        serializer = MenuSerializer(restaurants, many=True)
+        print(restaurant_ids)
+        restaurants = Admins.objects.filter(id__in=restaurant_ids, id_service=2)
+        serializer = AdminSerializer(restaurants, many=True)
         
         return JsonResponse(serializer.data, safe=False)
 
@@ -140,21 +143,29 @@ class AddToPanierAPIView(APIView):
         utilisateur_id = request.data.get('user_id')
         menu_id = request.data.get('menu_id')
         quantite = request.data.get('quantite', 1)
+        
         if not utilisateur_id or not menu_id:
             return JsonResponse({'error': 'User ID and Menu ID are required'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             utilisateur = Admins.objects.get(id=utilisateur_id, id_service=1)
         except Admins.DoesNotExist:
             return JsonResponse({'error': 'Invalid User ID or User is not a client'}, status=status.HTTP_404_NOT_FOUND)
+        
         try:
             menu = Menu.objects.get(id=menu_id)
         except Menu.DoesNotExist:
             return JsonResponse({"error": "Menu not found"}, status=status.HTTP_404_NOT_FOUND)
-        panier, created = Panier.objects.get_or_create(utilisateur=utilisateur)
+        
+        panier, created = Panier.objects.get_or_create(utilisateur=utilisateur, etat='en_cours')
+        if not created and panier.etat == 'valide':
+            # Créer un nouveau panier si le panier actuel est déjà validé
+            panier = Panier.objects.create(utilisateur=utilisateur)
+
         item, created = PanierItem.objects.get_or_create(panier=panier, menu=menu)
-        # Set the quantity to the value provided in the request
         item.quantite = int(quantite)
         item.save()
+        
         serializer = PanierItemSerializer(item)
         return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
     
@@ -191,7 +202,7 @@ class GetPanierAPIView(APIView):
         except Admins.DoesNotExist:
             return JsonResponse({'error': 'Invalid User ID or User is not a client'}, status=status.HTTP_404_NOT_FOUND)
         try:
-            panier = Panier.objects.get(utilisateur=utilisateur)
+            panier = Panier.objects.get(utilisateur=utilisateur, etat='en_cours')
             panier_items = panier.items.all()
             serializer = PanierItemSerializer(panier_items, many=True)
             return JsonResponse(serializer.data, safe=False)
@@ -203,30 +214,25 @@ class ValidatePanierAPIView(APIView):
         utilisateur_id = request.data.get('user_id')
         if not utilisateur_id:
             return JsonResponse({"error": "User ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
             utilisateur = Admins.objects.get(id=utilisateur_id, id_service=1)
         except Admins.DoesNotExist:
             return JsonResponse({'error': 'Invalid User ID or User is not a client'}, status=status.HTTP_404_NOT_FOUND)
+
         try:
-            panier = Panier.objects.get(utilisateur=utilisateur)
+            panier = Panier.objects.get(utilisateur=utilisateur, etat = 'en_cours')
+            if panier.etat == 'valide':  # Vérifier si le panier est déjà validé
+                return JsonResponse({"error": "This panier is already validated."}, status=status.HTTP_400_BAD_REQUEST)
+            
             items = panier.items.filter(est_payee=False)
             if not items.exists():
                 return JsonResponse({"error": "Panier is empty or all items are paid"}, status=status.HTTP_400_BAD_REQUEST)
 
-            total = 0
-            items = []
-            total = 0
-            items = []
-            for item in panier.items.all():
-                item_total = item.total()
-                total += item_total
-                items.append({
-                    "id": item.id,
-                    "nom": item.menu.nom,
-                    "quantite": item.quantite
-                })
-
+            total = sum(item.total() for item in items)
             reference = str(uuid.uuid4())
+
+            # Créer la commande
             commande = Commande.objects.create(
                 utilisateur=utilisateur,
                 panier=panier,
@@ -234,13 +240,24 @@ class ValidatePanierAPIView(APIView):
                 montant_total=total,
                 est_payee=False
             )
+
+            # Mettre à jour l'état du panier
+            panier.etat = 'valide'
+            panier.save()
+
             return JsonResponse({
                 "reference": reference, 
                 "montant_total": total,
-                "items": items
+                "items": [{
+                    "id": item.id,
+                    "nom": item.menu.nom,
+                    "quantite": item.quantite
+                } for item in items]
             }, status=status.HTTP_201_CREATED)
+        
         except Panier.DoesNotExist:
             return JsonResponse({"error": "Panier not found"}, status=status.HTTP_404_NOT_FOUND)
+
 
 class CreateCheckoutSessionAPIView(APIView):
     def post(self, request):

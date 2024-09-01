@@ -70,7 +70,7 @@ class FavorisMenu(models.Model):
 class Panier(models.Model):
     utilisateur = models.ForeignKey(Admins, on_delete=models.CASCADE)
     date_creation = models.DateTimeField(auto_now_add=True)
-    
+    etat = models.CharField(max_length=20, default='en_cours')
     class Meta:
         db_table = "panier"
 

@@ -67,7 +67,7 @@ class GetAllMenusAPIView(APIView):
         except Admins.DoesNotExist:
             return JsonResponse({'message': 'Invalid user ID'}, status=status.HTTP_404_NOT_FOUND)
 
-        menus = Menu.objects.all()
+        menus = Menu.objects.filter(number_dispo__gt=0)
         favoris_menus = FavorisMenu.objects.filter(user=user).values_list('menu_id', flat=True)
         favoris_restaurants = FavorisRestaurant.objects.filter(user=user).values_list('restaurant_id', flat=True)
 
@@ -76,7 +76,7 @@ class GetAllMenusAPIView(APIView):
             menu_dict = {
                 **MenuSerializer(menu).data,
                 'is_favoris_menu': menu.id in favoris_menus,
-                'is_favoris_restaurant': menu.id in favoris_restaurants
+                'is_favoris_restaurant': menu.admin.id in favoris_restaurants
             }
             menu_data.append(menu_dict)
 
