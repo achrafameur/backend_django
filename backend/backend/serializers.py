@@ -5,8 +5,8 @@ from rest_framework.serializers import ModelSerializer
 class AdminSerializer(ModelSerializer):
     class Meta:
         model = Admins
-        fields = ['id', 'nom', 'prenom', 'nom_organisme', 'num_siret', 'adresse_mail',
-                'id_service','avatar', 'localisation']
+        fields = ['id', 'nom', 'prenom', 'nom_organisme', 'num_siret', 'adresse_mail', 'password',
+                'id_service','avatar', 'localisation', 'is_verified']
     
 class MenuSerializer(ModelSerializer):
     admin = AdminSerializer()

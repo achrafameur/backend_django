@@ -1,6 +1,7 @@
 from datetime import date, datetime, time
 from datetime import timedelta
 from unittest import result
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.http import JsonResponse
 from rest_framework import status
@@ -20,7 +21,8 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q
-
+import logging
+from django.contrib.auth.decorators import user_passes_test
 env = Env()
 env.read_env()
 
@@ -78,3 +80,20 @@ class ProfileAPIView(APIView):
             return JsonResponse(serializer.data, status=status.HTTP_200_OK)
         except Admins.DoesNotExist:
             return JsonResponse({'error': 'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+logger = logging.getLogger(__name__)
+
+def verifier_professionnel(request, admin_id):
+    logger.debug(f"Tentative de vérification du professionnel avec l'ID : {admin_id}")
+    admin = get_object_or_404(Admins, id=admin_id, id_service=2)
+    
+    if admin.is_verified:
+        logger.debug("Le professionnel est déjà vérifié.")
+        return JsonResponse({'status': 'already_verified', 'message': 'Le professionnel est déjà vérifié.'})
+    
+    admin.is_verified = True
+    admin.save()
+    logger.debug("Le professionnel a été vérifié avec succès.")
+    
+    return JsonResponse({'status': 'success', 'message': 'Le professionnel a été vérifié avec succès.'})

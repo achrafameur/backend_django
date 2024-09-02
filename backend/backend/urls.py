@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
-from backend.views import InscriptionAPIView, ConnexionAPIView, ProfileAPIView
+from backend.views import InscriptionAPIView, ConnexionAPIView, ProfileAPIView, verifier_professionnel
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -13,6 +13,8 @@ urlpatterns = [
     path('api/inscription/', InscriptionAPIView.as_view(), name='inscription'),
     path('api/connexion/', ConnexionAPIView.as_view(), name='connexion'),
     path('api/profile/', ProfileAPIView.as_view(), name='profile'),
+    path('api/verifier-professionnel/<int:admin_id>/', verifier_professionnel, name='verifier_professionnel'),
+
 ]
 
 
