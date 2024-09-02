@@ -173,5 +173,33 @@ class ApproveDeclineMenuAPIView(APIView):
         menu.save()
 
         return JsonResponse({'message': f'Menu has been {action}d by Admin ID {admin_id}'}, status=status.HTTP_200_OK)
+    
+class AddAdminAPIView(APIView):
+    def post(self, request):
+        # Extraire les données du corps de la requête
+        nom = request.data.get('nom')
+        prenom = request.data.get('prenom')
+        adresse_mail = request.data.get('adresse_mail')
+        password = request.data.get('password')
+        avatar = request.data.get('avatar', None)
+        
+        # Vérifier que les champs requis sont présents
+        if not nom or not prenom or not adresse_mail or not password:
+            return JsonResponse({"error": "Nom, prénom, adresse mail, et mot de passe sont requis."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        hashed_password = make_password(password)
+        # Créer un nouvel administrateur
+        admin = Admins(
+            nom=nom,
+            prenom=prenom,
+            adresse_mail=adresse_mail,
+            password=hashed_password,
+            id_service=0,
+            avatar=avatar
+        ) 
+        admin.save()
+
+        serializer = AdminSerializer(admin)
+        return JsonResponse({"admin": serializer.data}, status=status.HTTP_201_CREATED)
 
 
