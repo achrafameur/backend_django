@@ -1,27 +1,14 @@
-from datetime import date, datetime, time
-from datetime import timedelta
-from unittest import result
 from django.utils import timezone
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.views import APIView
-from django.http import HttpResponse
-# from rest_framework.permissions import IsAuthenticated
-# from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-# from django.core import serializers
-from django.utils.html import escape
-import html
 from environ import Env
 from backend.models import Admins, Menu
 from backend.serializers import AdminSerializer, MenuSerializer, MenuAddSerializer
-from django.contrib.auth.hashers import make_password, check_password
-import jwt
-from datetime import datetime, timedelta
-from django.conf import settings
-from rest_framework.parsers import MultiPartParser, FormParser
-from django.db.models import Q
-
+from django.utils import timezone
+from django.db.models import Sum, F
 from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier, PanierItem, Commande
+from decimal import Decimal
 
 env = Env()
 env.read_env()
@@ -90,3 +77,93 @@ class MenuDetailAPIView(APIView):
             return JsonResponse(serializer.data, safe=False)
         except Menu.DoesNotExist:
             return JsonResponse({"message": "Menu not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+class RestaurantOrdersAPIView(APIView):
+    def get(self, request, restaurant_id):
+        try:
+            # Filtrer les menus appartenant au restaurant
+            restaurant = Admins.objects.get(id=restaurant_id, id_service=2)
+            menus = Menu.objects.filter(admin=restaurant)
+            
+            # Filtrer les panier_items payées liées aux menus du restaurant
+            panier_items = PanierItem.objects.filter(menu__in=menus, est_payee=True).select_related('panier', 'menu', 'panier__utilisateur')
+            
+            # Dictionnaire pour regrouper les commandes
+            commandes_dict = {}
+
+            for item in panier_items:
+                commande_ref = item.panier.commande.reference
+                if commande_ref not in commandes_dict:
+                    commandes_dict[commande_ref] = {
+                        "commande_reference": commande_ref,
+                        "date_commande": item.panier.commande.date_commande,
+                        "prenom_client": item.panier.utilisateur.prenom,
+                        "nom_client": item.panier.utilisateur.nom,
+                        "menus": [],
+                        "total_commande": 0
+                    }
+
+                # Ajouter les détails du menu à la commande correspondante
+                commandes_dict[commande_ref]["menus"].append({
+                    "menu_nom": item.menu.nom,
+                    "quantite": item.quantite,
+                    "prix_unitaire": str(item.menu.prix),
+                    "total": str(item.total())
+                })
+
+                # Mettre à jour le total de la commande
+                commandes_dict[commande_ref]["total_commande"] += item.total()
+
+            # Convertir le dictionnaire en liste
+            orders_data = list(commandes_dict.values())
+
+            return JsonResponse({"orders": orders_data}, status=status.HTTP_200_OK)
+
+        except Admins.DoesNotExist:
+            return JsonResponse({"error": "Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
+
+class RestaurantStatsAPIView(APIView):
+    def get(self, request, restaurant_id):
+        today = timezone.now().date()
+        start_of_month = today.replace(day=1)
+        start_of_year = today.replace(month=1, day=1)
+
+        try:
+            # All orders stats
+            total_orders = PanierItem.objects.filter(menu__admin_id=restaurant_id, est_payee=True).count()
+            total_revenue = PanierItem.objects.filter(menu__admin_id=restaurant_id, est_payee=True).aggregate(Sum('menu__prix'))['menu__prix__sum'] or Decimal('0.00')
+            restaurant_share = total_revenue * Decimal('0.80')
+
+            # Today's orders stats
+            today_orders = PanierItem.objects.filter(menu__admin_id=restaurant_id, est_payee=True, panier__commande__date_commande__date=today).count()
+            today_revenue = PanierItem.objects.filter(menu__admin_id=restaurant_id, est_payee=True, panier__commande__date_commande__date=today).aggregate(Sum('menu__prix'))['menu__prix__sum'] or Decimal('0.00')
+
+            # Monthly and Annual stats
+            monthly_revenue = PanierItem.objects.filter(
+                menu__admin_id=restaurant_id,
+                est_payee=True,
+                panier__commande__date_commande__date__range=[start_of_month, today]
+            ).aggregate(Sum('menu__prix'))['menu__prix__sum'] or Decimal('0.00')
+
+            annual_revenue = PanierItem.objects.filter(
+                menu__admin_id=restaurant_id,
+                est_payee=True,
+                panier__commande__date_commande__date__range=[start_of_year, today]
+            ).aggregate(Sum('menu__prix'))['menu__prix__sum'] or Decimal('0.00')
+
+            stats_data = {
+                "total_orders": total_orders,
+                "total_revenue": str(total_revenue),
+                "restaurant_share": str(restaurant_share),
+                "today_orders": today_orders,
+                "today_revenue": str(today_revenue),
+                "monthly_revenue": str(monthly_revenue),
+                "annual_revenue": str(annual_revenue)
+            }
+
+            return JsonResponse({"stats": stats_data}, status=status.HTTP_200_OK)
+
+        except Menu.DoesNotExist:
+            return JsonResponse({'error': 'Invalid restaurant ID'}, status=status.HTTP_404_NOT_FOUND)
+

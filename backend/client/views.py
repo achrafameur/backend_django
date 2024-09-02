@@ -334,3 +334,50 @@ class StripeWebhookView(APIView):
                 return HttpResponse(f"Commande with reference {client_reference_id} does not exist.", status=404)
 
         return HttpResponse(status=200)
+    
+
+class UserOrdersAPIView(APIView):
+    def get(self, request, user_id):
+        try:
+            utilisateur = Admins.objects.get(id=user_id, id_service=1)
+            commandes = Commande.objects.filter(utilisateur=utilisateur).select_related('panier').prefetch_related('panier__items__menu')
+
+            orders_data = []
+            for commande in commandes:
+                items_data = []
+                # Accessing items via the reverse relation 'items' on the Panier model
+                for item in commande.panier.items.all():
+                    try:
+                        menu_name = item.menu.nom
+                        menu_price = item.menu.prix
+                        item_total = item.total()
+                    except PanierItem.menu.RelatedObjectDoesNotExist:
+                        menu_name = "Menu not available"
+                        menu_price = 0
+                        item_total = 0
+
+                    items_data.append({
+                        "id": item.id,
+                        "nom": menu_name,
+                        "quantite": item.quantite,
+                        "prix": menu_price,
+                        "total": item_total,
+                    })
+
+                orders_data.append({
+                    "reference": commande.reference,
+                    "date_commande": commande.date_commande,
+                    "montant_total": commande.montant_total,
+                    "est_payee": commande.est_payee,
+                    "items": items_data
+                })
+
+            return JsonResponse({"commandes": orders_data}, status=status.HTTP_200_OK)
+        
+        except Admins.DoesNotExist:
+            return JsonResponse({'error': 'Invalid User ID or User is not a client'}, status=status.HTTP_404_NOT_FOUND)
+        except Commande.DoesNotExist:
+            return JsonResponse({'error': 'No orders found for this user'}, status=status.HTTP_404_NOT_FOUND)
+
+
+
