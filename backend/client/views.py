@@ -1,7 +1,7 @@
 from django.shortcuts import render
 # Create your views here.
-from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier, PanierItem, Commande
-from backend.serializers import MenuSerializer, FavorisRestaurantSerializer, FavorisMenuSerializer, PanierItemSerializer, AdminSerializer
+from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier, PanierItem, Commande, Litige
+from backend.serializers import MenuSerializer,LitigeSerializer, FavorisRestaurantSerializer, FavorisMenuSerializer, PanierItemSerializer, AdminSerializer
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework import status
@@ -379,5 +379,41 @@ class UserOrdersAPIView(APIView):
         except Commande.DoesNotExist:
             return JsonResponse({'error': 'No orders found for this user'}, status=status.HTTP_404_NOT_FOUND)
 
+
+class LitigeListAPIView(APIView):
+    def get(self, request):
+        litiges = Litige.objects.all()
+        serializer = LitigeSerializer(litiges, many=True)
+        return JsonResponse(serializer.data, safe=False , status=status.HTTP_200_OK)
+    
+class LitigeCreateAPIView(APIView):
+    def post(self, request):
+        serializer = LitigeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
+        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class LitigeDetailAPIView(APIView):
+    def get_object(self, litige_id):
+        return get_object_or_404(Litige, id=litige_id)
+
+    def get(self, request, litige_id):
+        litige = self.get_object(litige_id)
+        serializer = LitigeSerializer(litige)
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, litige_id):
+        litige = self.get_object(litige_id)
+        serializer = LitigeSerializer(litige, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, litige_id):
+        litige = self.get_object(litige_id)
+        litige.delete()
+        return JsonResponse({"message": "Litige deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 

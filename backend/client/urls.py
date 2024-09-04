@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.urls import path, include
 from .views import AddFavorisRestaurantAPIView, DeleteFavorisRestaurantAPIView, GetAllFavorisRestaurantsAPIView, \
     AddFavorisMenuAPIView, DeleteFavorisMenuAPIView, GetAllFavorisMenusAPIView, AddToPanierAPIView, UpdatePanierItemAPIView, \
-    DeletePanierItemAPIView, ValidatePanierAPIView, GetPanierAPIView, CreateCheckoutSessionAPIView, StripeWebhookView, UserOrdersAPIView
+    DeletePanierItemAPIView, ValidatePanierAPIView, GetPanierAPIView, CreateCheckoutSessionAPIView, StripeWebhookView, UserOrdersAPIView, \
+    LitigeListAPIView, LitigeCreateAPIView, LitigeDetailAPIView
 
 urlpatterns = [
     # Verified
@@ -25,4 +26,8 @@ urlpatterns = [
     path('stripe-webhook/', StripeWebhookView.as_view(), name='stripe-webhook'),
 
     path('commandes/<int:user_id>/', UserOrdersAPIView.as_view(), name='commands-list'),
+
+    path('litiges/', LitigeListAPIView.as_view(), name='litige-list'),
+    path('litiges/add/', LitigeCreateAPIView.as_view(), name='litige-create'),
+    path('litiges/<int:litige_id>/', LitigeDetailAPIView.as_view(), name='litige-detail')
 ]

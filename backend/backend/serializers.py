@@ -1,4 +1,4 @@
-from backend.models import Admins, Menu, FavorisRestaurant, FavorisMenu, PanierItem, Panier, Commande
+from backend.models import Admins, Menu, FavorisRestaurant, FavorisMenu, PanierItem, Panier, Commande, Litige
 from rest_framework.serializers import ModelSerializer
 
 
@@ -61,3 +61,8 @@ class RestaurantSeats(ModelSerializer):
     class Meta:
         model = Commande
         fields = ['id', 'restaurant', 'available_seats']
+
+class LitigeSerializer(ModelSerializer):
+    class Meta:
+        model = Litige
+        fields = ['id', 'titre', 'description', 'date_ajout', 'admin']
