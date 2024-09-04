@@ -84,16 +84,4 @@ class ProfileAPIView(APIView):
 
 logger = logging.getLogger(__name__)
 
-def verifier_professionnel(request, admin_id):
-    logger.debug(f"Tentative de vérification du professionnel avec l'ID : {admin_id}")
-    admin = get_object_or_404(Admins, id=admin_id, id_service=2)
-    
-    if admin.is_verified:
-        logger.debug("Le professionnel est déjà vérifié.")
-        return JsonResponse({'status': 'already_verified', 'message': 'Le professionnel est déjà vérifié.'})
-    
-    admin.is_verified = True
-    admin.save()
-    logger.debug("Le professionnel a été vérifié avec succès.")
-    
-    return JsonResponse({'status': 'success', 'message': 'Le professionnel a été vérifié avec succès.'})
+

@@ -4,7 +4,7 @@ from django.urls import path, include
 from superadmin.views import UpdateAdminAPIView, DeleteAdminAPIView, \
     GetSuperAdminsAPIView, GetClientsAPIView, GetProfessionnelsAPIView, \
     GetMenusByAdminAPIView, ProfessionnelSearchAPIView, ClientsSearchAPIView, \
-    AdminsSearchAPIView, PendingMenusListAPIView, ApproveDeclineMenuAPIView
+    AdminsSearchAPIView, PendingMenusListAPIView, ApproveDeclineMenuAPIView, VerifyProfessionalAPIView, DeclineProfessionalAPIView, GetListOfProfToVerify
 
 urlpatterns = [
     path('admin/update/<int:admin_id>/', UpdateAdminAPIView.as_view(), name='update-admin'),
@@ -18,4 +18,8 @@ urlpatterns = [
     path('admins/search_super_admins/', AdminsSearchAPIView.as_view(), name='search-professionnels'),
     path('pending-menus/', PendingMenusListAPIView.as_view(), name='pending-menus-list'),
     path('approve-decline-menu/', ApproveDeclineMenuAPIView.as_view(), name='approve-decline-menu'),
+    path('verifier-professionnel/<int:admin_id>/', VerifyProfessionalAPIView.as_view(), name='verifier_professionnel'),
+    path('refuser-professionnel/<int:admin_id>/', DeclineProfessionalAPIView.as_view(), name='refuser_professionnel'),
+    path('admins/list-professionnels/', GetListOfProfToVerify.as_view(), name='get-list-professionnels'),
+
 ]
