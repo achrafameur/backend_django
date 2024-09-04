@@ -15,6 +15,8 @@ class Admins(models.Model):
     is_verification_mail_set = models.BooleanField(default=False)
     avatar = CloudinaryField('avatar', blank=True, null=True)
     localisation = models.CharField(max_length=255, null=True, blank=True)
+    is_verified = models.BooleanField(default=False) 
+    is_declined = models.BooleanField(default=False)
 
     class Meta:
         db_table = "admins"
