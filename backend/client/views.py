@@ -330,6 +330,13 @@ class StripeWebhookView(APIView):
                 for item in commande.panier.items.all():
                     item.est_payee = True
                     item.save()
+                
+                menu = item.menu
+                if menu.number_dispo >= item.quantite:
+                    menu.number_dispo -= item.quantite
+                    menu.save()
+                else:
+                    return HttpResponse(f"Not enough stock for menu {menu.nom}", status=400)
             except Commande.DoesNotExist:
                 return HttpResponse(f"Commande with reference {client_reference_id} does not exist.", status=404)
 

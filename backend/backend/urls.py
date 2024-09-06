@@ -15,6 +15,5 @@ urlpatterns = [
     path('api/profile/', ProfileAPIView.as_view(), name='profile'),
 ]
 
-
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
