@@ -214,5 +214,5 @@ class GetListOfProfToVerify(APIView):
     def get(self, request):
         professionnels = Admins.objects.filter(id_service=2, is_verified=False, is_declined=False)
         serializer = AdminSerializer(professionnels, many=True)
-        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK, safe=False)
 
