@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.db.models import Sum, F
 from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier, PanierItem, Commande
 from decimal import Decimal
+from venv import logger
 
 env = Env()
 env.read_env()
@@ -166,4 +167,52 @@ class RestaurantStatsAPIView(APIView):
 
         except Menu.DoesNotExist:
             return JsonResponse({'error': 'Invalid restaurant ID'}, status=status.HTTP_404_NOT_FOUND)
+        
+class VerifyProfessionalAPIView(APIView):
+    def get(self, request, admin_id):
+        try:
+            admin = Admins.objects.get(id=admin_id, id_service=2)
+        except Admins.DoesNotExist:
+            return JsonResponse({'error': 'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if admin.is_verified:
+            logger.debug("Le professionnel est déjà vérifié.")
+            return JsonResponse({'status': 'already_verified', 'message': 'Le professionnel est déjà vérifié.'})
+
+        admin.is_verified = True
+        admin.save()
+        logger.debug("Le professionnel a été vérifié avec succès.")
+        
+        return JsonResponse({'status': 'success', 'message': 'Le professionnel a été vérifié avec succès.'}, status=status.HTTP_200_OK)
+    
+
+
+class DeclineProfessionalAPIView(APIView):
+    def get(self, request, admin_id):
+
+        if not admin_id:
+            return JsonResponse({'error': 'Admin ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            admin = Admins.objects.get(id=admin_id, id_service=2, is_verified=0)
+        except Admins.DoesNotExist:
+            return JsonResponse({'error': 'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if admin.is_declined:
+            logger.debug("Le professionnel est déjà refusé.")
+            return JsonResponse({'status': 'already_declined', 'message': 'Le professionnel est déjà refusé.'})
+
+        admin.is_declined = True
+        admin.save()
+        logger.debug("Le professionnel a été refusé avec succès.")
+        
+        return JsonResponse({'status': 'success', 'message': 'Le professionnel a été refusé avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+class GetListOfProfToVerify(APIView):
+    def get(self, request):
+        professionnels = Admins.objects.filter(id_service=2, is_verified=False, is_declined=False)
+        serializer = AdminSerializer(professionnels, many=True)
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
 
