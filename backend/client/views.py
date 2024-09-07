@@ -12,6 +12,7 @@ from django.http import HttpResponse
 import logging
 logger = logging.getLogger(__name__)
 from django.shortcuts import get_object_or_404
+from math import radians, cos, sin, asin, sqrt
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -423,4 +424,42 @@ class LitigeDetailAPIView(APIView):
         litige.delete()
         return JsonResponse({"message": "Litige deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+        
+def calculate_distance(lat1, lon1, lat2, lon2):
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
 
+    dlat = lat2 - lat1 
+    dlon = lon2 - lon1 
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * asin(sqrt(a)) 
+    r = 6371
+    return c * r
+
+class GetNearbyRestaurantsAPIView(APIView):
+    def post(self, request):
+        client_id = request.data.get('client_id')
+        # Récupère le client
+        client = get_object_or_404(Admins, id=client_id)
+        client_lat = client.latitude
+        client_lon = client.longitude
+
+        if not client_lat or not client_lon:
+            return JsonResponse({"error": "Client location not available"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Récupère tous les restaurants vérifiés
+        restaurants = Admins.objects.filter(id_service=2, is_verified=True)
+
+        nearby_restaurants = []
+        for restaurant in restaurants:
+            if restaurant.latitude and restaurant.longitude:
+                distance = calculate_distance(client_lat, client_lon, restaurant.latitude, restaurant.longitude)
+                if distance <= 10:
+                    nearby_restaurants.append({
+                        'id': restaurant.id,
+                        'nom_organisme': restaurant.nom_organisme,
+                        'distance': distance,
+                        'latitude': restaurant.latitude,
+                        'longitude': restaurant.longitude
+                    })
+
+        return JsonResponse(nearby_restaurants, safe=False, status=status.HTTP_200_OK)

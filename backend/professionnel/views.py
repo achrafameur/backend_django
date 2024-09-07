@@ -8,7 +8,7 @@ from backend.serializers import AdminSerializer, MenuSerializer, MenuAddSerializ
 from django.utils import timezone
 from django.db.models import Sum, F
 from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier, PanierItem, Commande
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from venv import logger
 
 env = Env()
@@ -135,6 +135,7 @@ class RestaurantStatsAPIView(APIView):
             total_orders = PanierItem.objects.filter(menu__admin_id=restaurant_id, est_payee=True).count()
             total_revenue = PanierItem.objects.filter(menu__admin_id=restaurant_id, est_payee=True).aggregate(Sum('menu__prix'))['menu__prix__sum'] or Decimal('0.00')
             restaurant_share = total_revenue * Decimal('0.80')
+            restaurant_share = restaurant_share.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
             # Today's orders stats
             today_orders = PanierItem.objects.filter(menu__admin_id=restaurant_id, est_payee=True, panier__commande__date_commande__date=today).count()
@@ -215,4 +216,40 @@ class GetListOfProfToVerify(APIView):
         professionnels = Admins.objects.filter(id_service=2, is_verified=False, is_declined=False)
         serializer = AdminSerializer(professionnels, many=True)
         return JsonResponse(serializer.data, status=status.HTTP_200_OK, safe=False)
+    
+class GetRestaurantByIdAPIView(APIView):
+    def get(self, request, restaurant_id):
+        try:
+            restaurant = Admins.objects.get(id=restaurant_id, id_service=2)
+        except Admins.DoesNotExist:
+            return JsonResponse({"detail": "Restaurant not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        restaurant_data = {
+            'id': restaurant.id,
+            'nom': restaurant.nom,
+            'prenom': restaurant.prenom,
+            'nom_organisme': restaurant.nom_organisme,
+            'num_siret': restaurant.num_siret,
+            'adresse_mail': restaurant.adresse_mail,
+            'localisation': restaurant.localisation,
+            'latitude': restaurant.latitude,
+            'longitude': restaurant.longitude,
+            'is_verified': restaurant.is_verified
+        }
+
+        menus = Menu.objects.filter(admin=restaurant)
+        menu_data = []
+        for menu in menus:
+            menu_data.append({
+                'id': menu.id,
+                'nom': menu.nom,
+                'description': menu.description,
+                'image': menu.image.url if menu.image else None,
+                'prix': str(menu.prix),
+                'number_dispo': menu.number_dispo
+            })
+
+        restaurant_data['menus'] = menu_data
+
+        return JsonResponse(restaurant_data, status=status.HTTP_200_OK)
 

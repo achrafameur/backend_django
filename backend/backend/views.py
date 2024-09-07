@@ -9,17 +9,14 @@ from django.http import HttpResponse
 # from rest_framework.permissions import IsAuthenticated
 # from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 # from django.core import serializers
-from django.utils.html import escape
-import html
 from environ import Env
-from backend.models import Admins, Menu
+from backend.models import Admins
 from backend.serializers import AdminSerializer, MenuSerializer
 from django.contrib.auth.hashers import make_password, check_password
 import jwt
 from datetime import datetime, timedelta
 from django.conf import settings
-from rest_framework.parsers import MultiPartParser, FormParser
-from django.db.models import Q
+from django.shortcuts import get_object_or_404
 
 env = Env()
 env.read_env()
@@ -78,3 +75,35 @@ class ProfileAPIView(APIView):
             return JsonResponse(serializer.data, status=status.HTTP_200_OK)
         except Admins.DoesNotExist:
             return JsonResponse({'error': 'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+class UpadateLocationAPIView(APIView):
+    serializer_class = AdminSerializer
+
+    def post(self, request, *args, **kwargs):
+        admin_id = request.data.get('admin_id')
+        latitude = request.data.get('latitude')
+        longitude = request.data.get('longitude')
+        try:
+            admin = get_object_or_404(Admins, id=admin_id)
+            admin.latitude = latitude
+            admin.longitude = longitude
+            admin.save()
+            return JsonResponse({"message": "Location updated successfully"}, status=200)
+        except Admins.DoesNotExist:
+            return JsonResponse({'error': 'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+class CheckLocationAPIView(APIView):
+    def post(self, request):
+        admin_id = request.data.get('admin_id')
+        user = get_object_or_404(Admins, id=admin_id)
+
+        if user.latitude is not None and user.longitude is not None:
+            return JsonResponse({
+                'location_enabled': True,
+                'latitude': user.latitude,
+                'longitude': user.longitude
+            }, status=status.HTTP_200_OK)
+        else:
+            return JsonResponse({
+                'location_enabled': False
+            }, status=status.HTTP_200_OK)

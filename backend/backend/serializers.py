@@ -6,7 +6,7 @@ class AdminSerializer(ModelSerializer):
     class Meta:
         model = Admins
         fields = ['id', 'nom', 'prenom', 'nom_organisme', 'num_siret', 'adresse_mail',
-                'id_service','avatar','password' ,'localisation', 'is_verified', 'is_declined']
+                'id_service','avatar','password' ,'localisation','longitude','latitude', 'is_verified', 'is_declined']
     
 class MenuSerializer(ModelSerializer):
     admin = AdminSerializer()

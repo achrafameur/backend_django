@@ -3,7 +3,7 @@ from django.urls import path, include
 from .views import AddFavorisRestaurantAPIView, DeleteFavorisRestaurantAPIView, GetAllFavorisRestaurantsAPIView, \
     AddFavorisMenuAPIView, DeleteFavorisMenuAPIView, GetAllFavorisMenusAPIView, AddToPanierAPIView, UpdatePanierItemAPIView, \
     DeletePanierItemAPIView, ValidatePanierAPIView, GetPanierAPIView, CreateCheckoutSessionAPIView, StripeWebhookView, UserOrdersAPIView, \
-    LitigeListAPIView, LitigeCreateAPIView, LitigeDetailAPIView
+    LitigeListAPIView, LitigeCreateAPIView, LitigeDetailAPIView, GetNearbyRestaurantsAPIView
 
 urlpatterns = [
     # Verified
@@ -29,5 +29,7 @@ urlpatterns = [
 
     path('litiges/', LitigeListAPIView.as_view(), name='litige-list'),
     path('litiges/add/', LitigeCreateAPIView.as_view(), name='litige-create'),
-    path('litiges/<int:litige_id>/', LitigeDetailAPIView.as_view(), name='litige-detail')
+    path('litiges/<int:litige_id>/', LitigeDetailAPIView.as_view(), name='litige-detail'),
+
+    path('get-nearby-restaurants/', GetNearbyRestaurantsAPIView.as_view(), name='nearby-restaurants')
 ]

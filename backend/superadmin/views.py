@@ -10,9 +10,11 @@ from django.http import HttpResponse
 # from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 # from django.core import serializers
 from django.utils.html import escape
+from django.db.models import Count
+from django.db.models.functions import TruncMonth
 import html
 from environ import Env
-from backend.models import Admins, Menu
+from backend.models import Admins, Menu, PanierItem, Commande
 from backend.serializers import AdminSerializer, MenuSerializer
 from django.contrib.auth.hashers import make_password, check_password
 import jwt
@@ -20,6 +22,8 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q
+from django.db.models import Sum
+from decimal import Decimal, ROUND_HALF_UP
 
 env = Env()
 env.read_env()
@@ -201,5 +205,74 @@ class AddAdminAPIView(APIView):
 
         serializer = AdminSerializer(admin)
         return JsonResponse({"admin": serializer.data}, status=status.HTTP_201_CREATED)
+    
+class GetOverallStats(APIView):
+    def get(self, request):
+        today = timezone.now().date()
+        start_of_month = today.replace(day=1)
+        start_of_year = today.replace(month=1, day=1)
+
+        try:
+            # All orders stats (based on Commande)
+            total_orders = Commande.objects.filter(est_payee=True).count()
+            total_revenue = Commande.objects.filter(est_payee=True).aggregate(Sum('montant_total'))['montant_total__sum'] or Decimal('0.00')
+
+            # Calculating our share
+            our_share = total_revenue * Decimal('0.20')  # Assuming 20% share
+            our_share = our_share.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+            # Today's orders stats
+            today_orders = Commande.objects.filter(est_payee=True, date_commande__date=today).count()
+            today_revenue = Commande.objects.filter(est_payee=True, date_commande__date=today).aggregate(Sum('montant_total'))['montant_total__sum'] or Decimal('0.00')
+
+            # Monthly and Annual stats
+            monthly_revenue = Commande.objects.filter(
+                est_payee=True,
+                date_commande__date__range=[start_of_month, today]
+            ).aggregate(Sum('montant_total'))['montant_total__sum'] or Decimal('0.00')
+
+            annual_revenue = Commande.objects.filter(
+                est_payee=True,
+                date_commande__date__range=[start_of_year, today]
+            ).aggregate(Sum('montant_total'))['montant_total__sum'] or Decimal('0.00')
+
+            stats_data = {
+                "total_orders": total_orders,
+                "total_revenue": str(total_revenue),
+                "our_share": str(our_share),
+                "today_orders": today_orders,
+                "today_revenue": str(today_revenue),
+                "monthly_revenue": str(monthly_revenue),
+                "annual_revenue": str(annual_revenue)
+            }
+
+            return JsonResponse({"stats": stats_data}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class OrdersTrendsAPIView(APIView):
+    def get(self, request):
+        try:
+            monthly_orders = (
+                Commande.objects.filter(est_payee=True)
+                .annotate(month=TruncMonth('date_commande'))
+                .values('month')
+                .annotate(orders=Count('id'))
+                .order_by('month')
+            )
+
+            months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+            orders_data = [{'name': month, 'orders': 0} for month in months]
+
+            for order in monthly_orders:
+                month_index = order['month'].month - 1
+                orders_data[month_index]['orders'] = order['orders']
+
+            return JsonResponse({"orders_data": orders_data}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
