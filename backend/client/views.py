@@ -284,7 +284,7 @@ class CreateCheckoutSessionAPIView(APIView):
                     },
                 ],
                 mode='payment',
-                success_url="http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}",
+                success_url="http://localhost:3000/commandes",
                 cancel_url="http://localhost:3000/cancel",
                 client_reference_id=reference, 
             )
