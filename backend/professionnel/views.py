@@ -10,6 +10,7 @@ from django.db.models import Sum, F
 from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier, PanierItem, Commande
 from decimal import Decimal, ROUND_HALF_UP
 from venv import logger
+from django.db.models import Q
 
 env = Env()
 env.read_env()
@@ -47,6 +48,8 @@ class DeleteMenuAPIView(APIView):
 class GetAllMenusAPIView(APIView):
     def post(self, request):
         user_id = request.data.get('user_id')
+        search_query = request.data.get('search_query', '')
+
         if not user_id:
             return JsonResponse({'message': 'User ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -55,7 +58,11 @@ class GetAllMenusAPIView(APIView):
         except Admins.DoesNotExist:
             return JsonResponse({'message': 'Invalid user ID'}, status=status.HTTP_404_NOT_FOUND)
 
+        # Filtrer les menus par nom de restaurant ou de menu selon la recherche
         menus = Menu.objects.filter(number_dispo__gt=0)
+        if search_query:
+            menus = menus.filter(Q(nom__icontains=search_query) | Q(admin__nom_organisme__icontains=search_query))
+
         favoris_menus = FavorisMenu.objects.filter(user=user).values_list('menu_id', flat=True)
         favoris_restaurants = FavorisRestaurant.objects.filter(user=user).values_list('restaurant_id', flat=True)
 
@@ -132,7 +139,7 @@ class RestaurantStatsAPIView(APIView):
 
         try:
             # All orders stats
-            total_orders = PanierItem.objects.filter(menu__admin_id=restaurant_id, est_payee=True).count()
+            total_orders = PanierItem.objects.filter(menu__admin_id=restaurant_id, est_payee=True).values('panier_id').distinct().count()
             total_revenue = PanierItem.objects.filter(menu__admin_id=restaurant_id, est_payee=True).aggregate(Sum('menu__prix'))['menu__prix__sum'] or Decimal('0.00')
             restaurant_share = total_revenue * Decimal('0.80')
             restaurant_share = restaurant_share.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
@@ -208,8 +215,6 @@ class DeclineProfessionalAPIView(APIView):
         logger.debug("Le professionnel a été refusé avec succès.")
         
         return JsonResponse({'status': 'success', 'message': 'Le professionnel a été refusé avec succès.'}, status=status.HTTP_200_OK)
-
-
 
 class GetListOfProfToVerify(APIView):
     def get(self, request):
