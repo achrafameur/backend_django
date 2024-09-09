@@ -141,7 +141,7 @@ class RestaurantStatsAPIView(APIView):
             # All orders stats
             total_orders = PanierItem.objects.filter(menu__admin_id=restaurant_id, est_payee=True).values('panier_id').distinct().count()
             total_revenue = PanierItem.objects.filter(menu__admin_id=restaurant_id, est_payee=True).aggregate(Sum('menu__prix'))['menu__prix__sum'] or Decimal('0.00')
-            restaurant_share = total_revenue * Decimal('0.80')
+            restaurant_share = total_revenue * Decimal('0.85')
             restaurant_share = restaurant_share.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
             # Today's orders stats

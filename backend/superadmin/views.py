@@ -218,7 +218,7 @@ class GetOverallStats(APIView):
             total_revenue = Commande.objects.filter(est_payee=True).aggregate(Sum('montant_total'))['montant_total__sum'] or Decimal('0.00')
 
             # Calculating our share
-            our_share = total_revenue * Decimal('0.20')  # Assuming 20% share
+            our_share = total_revenue * Decimal('0.15')
             our_share = our_share.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
             # Today's orders stats
