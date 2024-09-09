@@ -215,6 +215,45 @@ class DeclineProfessionalAPIView(APIView):
         logger.debug("Le professionnel a été refusé avec succès.")
         
         return JsonResponse({'status': 'success', 'message': 'Le professionnel a été refusé avec succès.'}, status=status.HTTP_200_OK)
+    
+
+class ActivateProfessionalAPIView(APIView):
+    def get(self, request, admin_id):
+        try:
+            admin = Admins.objects.get(id=admin_id, id_service=2)
+        except Admins.DoesNotExist:
+            return JsonResponse({'error': 'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if admin.is_verified:
+            return JsonResponse({'status': 'already_verified', 'message': 'Le professionnel est déjà vérifié.'})
+
+        admin.is_verified = True
+        admin.is_declined = False
+        admin.save()
+        
+        return JsonResponse({'status': 'success', 'message': 'Le professionnel a été vérifié avec succès.'}, status=status.HTTP_200_OK)
+    
+
+
+class DesactivateProfessionalAPIView(APIView):
+    def get(self, request, admin_id):
+
+        if not admin_id:
+            return JsonResponse({'error': 'Admin ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            admin = Admins.objects.get(id=admin_id, id_service=2)
+        except Admins.DoesNotExist:
+            return JsonResponse({'error': 'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if admin.is_declined:
+            return JsonResponse({'status': 'already_declined', 'message': 'Le professionnel est déjà refusé.'})
+
+        admin.is_declined = True
+        admin.is_verified = False
+        admin.save()
+        
+        return JsonResponse({'status': 'success', 'message': 'Le professionnel a été refusé avec succès.'}, status=status.HTTP_200_OK)
 
 class GetListOfProfToVerify(APIView):
     def get(self, request):

@@ -193,6 +193,23 @@ class DeletePanierItemAPIView(APIView):
         except PanierItem.DoesNotExist:
             return JsonResponse({"error": "Panier item not found"}, status=status.HTTP_404_NOT_FOUND)
 
+# class GetPanierAPIView(APIView):
+#     def get(self, request):
+#         utilisateur_id = request.query_params.get('user_id')
+#         if not utilisateur_id:
+#             return JsonResponse({"error": "User ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+#         try:
+#             utilisateur = Admins.objects.get(id=utilisateur_id, id_service=1)
+#         except Admins.DoesNotExist:
+#             return JsonResponse({'error': 'Invalid User ID or User is not a client'}, status=status.HTTP_404_NOT_FOUND)
+#         try:
+#             panier = Panier.objects.get(utilisateur=utilisateur, etat='en_cours')
+#             panier_items = panier.items.all()
+#             serializer = PanierItemSerializer(panier_items, many=True)
+#             return JsonResponse(serializer.data, safe=False)
+#         except Panier.DoesNotExist:
+#             return JsonResponse({"error": "Panier not found"}, status=status.HTTP_404_NOT_FOUND)
+
 class GetPanierAPIView(APIView):
     def get(self, request):
         utilisateur_id = request.query_params.get('user_id')
@@ -202,13 +219,33 @@ class GetPanierAPIView(APIView):
             utilisateur = Admins.objects.get(id=utilisateur_id, id_service=1)
         except Admins.DoesNotExist:
             return JsonResponse({'error': 'Invalid User ID or User is not a client'}, status=status.HTTP_404_NOT_FOUND)
+        
         try:
             panier = Panier.objects.get(utilisateur=utilisateur, etat='en_cours')
             panier_items = panier.items.all()
+            
+            total_panier = sum(float(item.menu.prix) * item.quantite for item in panier_items)
+
+            reserved_restaurants = set(item.menu.admin.id for item in panier_items if item.sur_place)
+
+            total_tables = len(reserved_restaurants) * 3
+            fees = 1
+            total = total_panier + len(reserved_restaurants) * 3 + fees
+            
             serializer = PanierItemSerializer(panier_items, many=True)
-            return JsonResponse(serializer.data, safe=False)
+            
+            response_data = {
+                'items': serializer.data,
+                'total_panier': total_panier,
+                'total_tables': total_tables,
+                "fees" : fees,
+                'total': total
+            }
+            return JsonResponse(response_data, safe=False)
+        
         except Panier.DoesNotExist:
             return JsonResponse({"error": "Panier not found"}, status=status.HTTP_404_NOT_FOUND)
+
 
 class ValidatePanierAPIView(APIView):
     def post(self, request):
@@ -223,14 +260,20 @@ class ValidatePanierAPIView(APIView):
 
         try:
             panier = Panier.objects.get(utilisateur=utilisateur, etat = 'en_cours')
-            if panier.etat == 'valide':  # Vérifier si le panier est déjà validé
+            if panier.etat == 'valide':
                 return JsonResponse({"error": "This panier is already validated."}, status=status.HTTP_400_BAD_REQUEST)
             
             items = panier.items.filter(est_payee=False)
             if not items.exists():
                 return JsonResponse({"error": "Panier is empty or all items are paid"}, status=status.HTTP_400_BAD_REQUEST)
 
-            total = sum(item.total() for item in items)
+            # total = sum(item.total() for item in items)
+            total_panier = sum(float(item.menu.prix) * item.quantite for item in items)
+
+            reserved_restaurants = set(item.menu.admin.id for item in items if item.sur_place)
+            total_tables = len(reserved_restaurants) * 3
+            fees = 1
+            total = total_panier + len(reserved_restaurants) * 3 + fees
             reference = str(uuid.uuid4())
 
             # Créer la commande
@@ -249,6 +292,8 @@ class ValidatePanierAPIView(APIView):
             return JsonResponse({
                 "reference": reference, 
                 "montant_total": total,
+                "fees": fees,
+                "total_tables": total_tables,
                 "items": [{
                     "id": item.id,
                     "nom": item.menu.nom,
@@ -463,3 +508,46 @@ class GetNearbyRestaurantsAPIView(APIView):
                     })
 
         return JsonResponse(nearby_restaurants, safe=False, status=status.HTTP_200_OK)
+    
+class ReserveTableAPIView(APIView):
+    def post(self, request):
+        admin_id = request.data.get('admin_id')
+        panier_id = request.data.get('panier_id')
+        print(admin_id)
+
+        if not admin_id or not panier_id:
+            return JsonResponse({"error": "Admin ID and Panier ID are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        restaurant = get_object_or_404(Admins, id=admin_id, id_service=2)
+        print(restaurant)
+        panier = get_object_or_404(Panier, id=panier_id, etat='en_cours')
+        print(restaurant)
+        items = PanierItem.objects.filter(panier=panier, menu__admin=restaurant)
+        if not items.exists():
+            return JsonResponse({"error": "No items found for this panier and restaurant"}, status=status.HTTP_404_NOT_FOUND)
+        
+        items.update(sur_place=True)
+        return JsonResponse({"success": "Items marked as reserved"}, status=status.HTTP_200_OK)
+    
+
+class CancelReservationAPIView(APIView):
+    def post(self, request):
+        admin_id = request.data.get('admin_id')
+        panier_id = request.data.get('panier_id')
+
+        if not admin_id or not panier_id:
+            return JsonResponse({"error": "Admin ID and Panier ID are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if the restaurant exists
+        restaurant = get_object_or_404(Admins, id=admin_id, id_service=2)
+
+        # Get the panier
+        panier = get_object_or_404(Panier, id=panier_id, utilisateur__id_service=1, etat='en_cours')
+
+        # Update items
+        items = PanierItem.objects.filter(panier=panier, menu__admin=restaurant)
+        if not items.exists():
+            return JsonResponse({"error": "No items found for this panier and restaurant"}, status=status.HTTP_404_NOT_FOUND)
+        
+        items.update(sur_place=False)
+        return JsonResponse({"success": "Reservation canceled"}, status=status.HTTP_200_OK)

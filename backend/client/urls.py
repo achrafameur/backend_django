@@ -3,7 +3,7 @@ from django.urls import path, include
 from .views import AddFavorisRestaurantAPIView, DeleteFavorisRestaurantAPIView, GetAllFavorisRestaurantsAPIView, \
     AddFavorisMenuAPIView, DeleteFavorisMenuAPIView, GetAllFavorisMenusAPIView, AddToPanierAPIView, UpdatePanierItemAPIView, \
     DeletePanierItemAPIView, ValidatePanierAPIView, GetPanierAPIView, CreateCheckoutSessionAPIView, StripeWebhookView, UserOrdersAPIView, \
-    LitigeListAPIView, LitigeCreateAPIView, LitigeDetailAPIView, GetNearbyRestaurantsAPIView
+    LitigeListAPIView, LitigeCreateAPIView, LitigeDetailAPIView, GetNearbyRestaurantsAPIView, ReserveTableAPIView, CancelReservationAPIView
 
 urlpatterns = [
     # Verified
@@ -31,5 +31,8 @@ urlpatterns = [
     path('litiges/add/', LitigeCreateAPIView.as_view(), name='litige-create'),
     path('litiges/<int:litige_id>/', LitigeDetailAPIView.as_view(), name='litige-detail'),
 
-    path('get-nearby-restaurants/', GetNearbyRestaurantsAPIView.as_view(), name='nearby-restaurants')
+    path('get-nearby-restaurants/', GetNearbyRestaurantsAPIView.as_view(), name='nearby-restaurants'),
+
+    path('reserve-table/', ReserveTableAPIView.as_view(), name='reserve-table'),
+    path('cancel-table/', CancelReservationAPIView.as_view(), name='cancel-table')
 ]

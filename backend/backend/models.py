@@ -39,6 +39,7 @@ class Menu(models.Model):
     is_approved = models.BooleanField(default=False)
     is_declined = models.BooleanField(default=False)
     approved_by = models.ForeignKey(Admins, on_delete=models.CASCADE, null=True, blank=True, related_name='approved_menus')
+    type = models.CharField(default='Menu', null=True, max_length=100)
 
     class Meta:
         db_table = "menus"
@@ -80,6 +81,7 @@ class PanierItem(models.Model):
     menu = models.ForeignKey(Menu, on_delete=models.CASCADE)
     quantite = models.PositiveIntegerField(default=1)
     est_payee = models.BooleanField(default=False)
+    sur_place = models.BooleanField(default = False)
     
     class Meta:
         db_table = "panier_item"
