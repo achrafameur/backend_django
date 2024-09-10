@@ -53,7 +53,7 @@ DATABASES = {
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['df81-2001-861-6750-4620-8dc-47ca-3379-e604.ngrok-free.app', 'localhost']
+ALLOWED_HOSTS = ['df81-2001-861-6750-4620-8dc-47ca-3379-e604.ngrok-free.app', 'localhost','http://13.51.163.31', '13.51.163.31']
 
 INSTALLED_APPS = [
     'cloudinary',
@@ -156,7 +156,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = 'http://studiesproject.s3-website.eu-north-1.amazonaws.com/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -165,7 +165,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
-    'http://localhost:3001',  # L'URL de votre application React
+    'http://localhost:3001',
+    'http://studiesproject.s3-website.eu-north-1.amazonaws.com/'  # L'URL de votre application React
 ]
 
 CORS_ALLOW_CREDENTIALS = True 
