@@ -232,3 +232,14 @@ GitHub.sublime-settings
 .history
 apteed_epp/apteed_epp/save.py
 .vscode
+
+
+./backend/backend/migrations
+./backend/client/migrations
+./backend/professionnel/migrations
+./backend/superadmin/migrations
+
+./backend/backend/__pycache__
+./backend/client/__pycache__
+./backend/professionnel/__pycache__
+./backend/superadmin/__pycache__

@@ -1,7 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, AbstractBaseUser
 from django.utils import timezone
-from backend.managers import CustomUserManager
 from cloudinary.models import CloudinaryField
 from django.core.exceptions import ValidationError
 
@@ -17,6 +15,10 @@ class Admins(models.Model):
     is_verification_mail_set = models.BooleanField(default=False)
     avatar = CloudinaryField('avatar', blank=True, null=True)
     localisation = models.CharField(max_length=255, null=True, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    is_verified = models.BooleanField(default=False) 
+    is_declined = models.BooleanField(default=False)
 
     class Meta:
         db_table = "admins"
@@ -34,9 +36,10 @@ class Menu(models.Model):
     image = CloudinaryField('image', blank=True, null=True)
     prix = models.DecimalField(max_digits=10, decimal_places=2)
     number_dispo = models.PositiveIntegerField(default=0)
-    is_approuved = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=False)
     is_declined = models.BooleanField(default=False)
     approved_by = models.ForeignKey(Admins, on_delete=models.CASCADE, null=True, blank=True, related_name='approved_menus')
+    type = models.CharField(default='Menu', null=True, max_length=100)
 
     class Meta:
         db_table = "menus"
@@ -46,7 +49,6 @@ class Menu(models.Model):
             self.nom_organisme = self.admin.nom_organisme
         super().save(*args, **kwargs)
         
-
 class FavorisRestaurant(models.Model):
     user = models.ForeignKey(Admins, on_delete=models.CASCADE, related_name='favoris_restaurants')
     restaurant = models.ForeignKey(Admins, on_delete=models.CASCADE, related_name='favoris_par_users')
@@ -70,7 +72,7 @@ class FavorisMenu(models.Model):
 class Panier(models.Model):
     utilisateur = models.ForeignKey(Admins, on_delete=models.CASCADE)
     date_creation = models.DateTimeField(auto_now_add=True)
-    
+    etat = models.CharField(max_length=20, default='en_cours')
     class Meta:
         db_table = "panier"
 
@@ -78,6 +80,8 @@ class PanierItem(models.Model):
     panier = models.ForeignKey(Panier, related_name='items', on_delete=models.CASCADE)
     menu = models.ForeignKey(Menu, on_delete=models.CASCADE)
     quantite = models.PositiveIntegerField(default=1)
+    est_payee = models.BooleanField(default=False)
+    sur_place = models.BooleanField(default = False)
     
     class Meta:
         db_table = "panier_item"
@@ -102,6 +106,18 @@ class RestaurantSeats(models.Model):
 
     class Meta:
         db_table = "restaurant_seats"
+    
+class Litige(models.Model):
+    titre = models.CharField(max_length=255)
+    description = models.TextField()
+    date_ajout = models.DateTimeField(default=timezone.now)
+    admin = models.ForeignKey('Admins', on_delete=models.CASCADE, related_name='litiges')
+
+    class Meta:
+        db_table = "litiges"
+
+    def __str__(self):
+        return self.titre
 
 class Token(models.Model):
     token = models.fields.TextField()
