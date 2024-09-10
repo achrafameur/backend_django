@@ -11,7 +11,9 @@ from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier,
 from decimal import Decimal, ROUND_HALF_UP
 from venv import logger
 from django.db.models import Q
-
+from datetime import datetime
+import pytz
+from django.utils.dateformat import format as django_format
 
 env = Env()
 env.read_env()
@@ -59,7 +61,6 @@ class GetAllMenusAPIView(APIView):
         except Admins.DoesNotExist:
             return JsonResponse({'message': 'Invalid user ID'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Filtrer les menus par nom de restaurant ou de menu selon la recherche
         menus = Menu.objects.filter(number_dispo__gt=0)
         if search_query:
             menus = menus.filter(Q(nom__icontains=search_query) | Q(admin__nom_organisme__icontains=search_query))
@@ -91,29 +92,31 @@ class MenuDetailAPIView(APIView):
 class RestaurantOrdersAPIView(APIView):
     def get(self, request, restaurant_id):
         try:
-            # Filtrer les menus appartenant au restaurant
             restaurant = Admins.objects.get(id=restaurant_id, id_service=2)
             menus = Menu.objects.filter(admin=restaurant)
             
-            # Filtrer les panier_items payées liées aux menus du restaurant
             panier_items = PanierItem.objects.filter(menu__in=menus, est_payee=True).select_related('panier', 'menu', 'panier__utilisateur')
             
-            # Dictionnaire pour regrouper les commandes
             commandes_dict = {}
+            france_timezone = pytz.timezone('Europe/Paris')
 
             for item in panier_items:
-                commande_ref = item.panier.commande.reference
+                commande = item.panier.commande
+                commande_ref = commande.reference
+
                 if commande_ref not in commandes_dict:
+                    date_commande_local = commande.date_commande.astimezone(france_timezone)
+                    formatted_date = django_format(date_commande_local, 'Y-m-d H:i:s')
+
                     commandes_dict[commande_ref] = {
                         "commande_reference": commande_ref,
-                        "date_commande": item.panier.commande.date_commande,
+                        "date_commande": formatted_date,
                         "prenom_client": item.panier.utilisateur.prenom,
                         "nom_client": item.panier.utilisateur.nom,
                         "menus": [],
                         "total_commande": 0
                     }
 
-                # Ajouter les détails du menu à la commande correspondante
                 commandes_dict[commande_ref]["menus"].append({
                     "menu_nom": item.menu.nom,
                     "quantite": item.quantite,
@@ -121,16 +124,17 @@ class RestaurantOrdersAPIView(APIView):
                     "total": str(item.total())
                 })
 
-                # Mettre à jour le total de la commande
                 commandes_dict[commande_ref]["total_commande"] += item.total()
 
-            # Convertir le dictionnaire en liste
             orders_data = list(commandes_dict.values())
+
+            orders_data.sort(key=lambda x: x["date_commande"], reverse=True)
 
             return JsonResponse({"orders": orders_data}, status=status.HTTP_200_OK)
 
         except Admins.DoesNotExist:
             return JsonResponse({"error": "Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
+
 
 class RestaurantStatsAPIView(APIView):
     def get(self, request, restaurant_id):

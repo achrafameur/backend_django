@@ -13,6 +13,9 @@ import logging
 logger = logging.getLogger(__name__)
 from django.shortcuts import get_object_or_404
 from math import radians, cos, sin, asin, sqrt
+from datetime import datetime
+import pytz
+from django.utils.dateformat import format as django_format
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -393,12 +396,14 @@ class UserOrdersAPIView(APIView):
     def get(self, request, user_id):
         try:
             utilisateur = Admins.objects.get(id=user_id, id_service=1)
-            commandes = Commande.objects.filter(utilisateur=utilisateur).select_related('panier').prefetch_related('panier__items__menu')
+            
+            commandes = Commande.objects.filter(utilisateur=utilisateur, est_payee=True).select_related('panier').prefetch_related('panier__items__menu')
 
             orders_data = []
+            france_timezone = pytz.timezone('Europe/Paris')
+            
             for commande in commandes:
                 items_data = []
-                # Accessing items via the reverse relation 'items' on the Panier model
                 for item in commande.panier.items.all():
                     try:
                         menu_name = item.menu.nom
@@ -417,13 +422,18 @@ class UserOrdersAPIView(APIView):
                         "total": item_total,
                     })
 
+                date_commande_local = commande.date_commande.astimezone(france_timezone)
+                formatted_date = django_format(date_commande_local, 'Y-m-d H:i:s')
+
                 orders_data.append({
                     "reference": commande.reference,
-                    "date_commande": commande.date_commande,
+                    "date_commande": formatted_date,
                     "montant_total": commande.montant_total,
                     "est_payee": commande.est_payee,
                     "items": items_data
                 })
+
+            orders_data.sort(key=lambda x: x["date_commande"], reverse=True)
 
             return JsonResponse({"commandes": orders_data}, status=status.HTTP_200_OK)
         
