@@ -4,13 +4,14 @@ from rest_framework import status
 from rest_framework.views import APIView
 from environ import Env
 from backend.models import Admins, Menu
-from backend.serializers import AdminSerializer, MenuSerializer, MenuAddSerializer
+from backend.serializers import AdminSerializer, MenuSerializer, MenuAddSerializer, RestaurantSeatsSerializer
 from django.utils import timezone
 from django.db.models import Sum, F
-from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier, PanierItem, Commande
+from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier, PanierItem, Commande, RestaurantSeats
 from decimal import Decimal, ROUND_HALF_UP
 from venv import logger
 from django.db.models import Q
+
 
 env = Env()
 env.read_env()
@@ -297,3 +298,53 @@ class GetRestaurantByIdAPIView(APIView):
 
         return JsonResponse(restaurant_data, status=status.HTTP_200_OK)
 
+class GetAvailableSeatsAPIView(APIView):
+    def post(self, request):
+        user_id = request.data.get('user_id')
+
+        if not user_id:
+            return JsonResponse({'message': 'User ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = Admins.objects.get(id=user_id, id_service=2)
+        except Admins.DoesNotExist:
+            return JsonResponse({'message': 'Invalid restaurant ID'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            seats = RestaurantSeats.objects.get(restaurant=user)
+        except RestaurantSeats.DoesNotExist:
+            return JsonResponse({'message': 'No seat data available for this restaurant'}, status=status.HTTP_404_NOT_FOUND)
+
+        seat_data = RestaurantSeatsSerializer(seats).data
+
+        return JsonResponse(seat_data, safe=False)
+
+# class UpdateAvailableSeatsAPIView(APIView):
+#     def put(self, request, restaurant_id):
+#         try:
+#             seats = RestaurantSeats.objects.get(restaurant_id=restaurant_id)
+#         except RestaurantSeats.DoesNotExist:
+#             return JsonResponse({"message": "RestaurantSeats not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+#         serializer = RestaurantSeatsSerializer(seats, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return JsonResponse(serializer.data)
+#         return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UpdateAvailableSeatsAPIView(APIView):
+    def put(self, request, restaurant_id):
+        try:
+            seats = RestaurantSeats.objects.get(restaurant_id=restaurant_id)
+        except RestaurantSeats.DoesNotExist:
+            return JsonResponse({"message": "RestaurantSeats not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        data = request.data.copy()
+        if 'number_dispo' in data:
+            data['available_seats'] = data.pop('number_dispo')
+        
+        serializer = RestaurantSeatsSerializer(seats, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data)
+        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
