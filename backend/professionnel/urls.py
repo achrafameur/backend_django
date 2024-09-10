@@ -4,7 +4,8 @@ from django.urls import path, include
 from professionnel.views import AddMenuAPIView, UpdateMenuAPIView, DeleteMenuAPIView, \
     GetAllMenusAPIView, MenuDetailAPIView, RestaurantOrdersAPIView, RestaurantStatsAPIView, \
     VerifyProfessionalAPIView, DeclineProfessionalAPIView, GetListOfProfToVerify, \
-    GetRestaurantByIdAPIView, ActivateProfessionalAPIView, DesactivateProfessionalAPIView
+    GetRestaurantByIdAPIView, ActivateProfessionalAPIView, DesactivateProfessionalAPIView, \
+    GetAvailableSeatsAPIView, UpdateAvailableSeatsAPIView
 
 urlpatterns = [
     path('menu/add/', AddMenuAPIView.as_view(), name='add-menu'),
@@ -20,4 +21,6 @@ urlpatterns = [
     path('desactivate-professionnel/<int:admin_id>/', DesactivateProfessionalAPIView.as_view(), name='verifier_professionnel'),
     path('activate-professionnel/<int:admin_id>/', ActivateProfessionalAPIView.as_view(), name='refuser_professionnel'),
     path('admins/list-professionnels/', GetListOfProfToVerify.as_view(), name='get-list-professionnels'),
+    path('seats/', GetAvailableSeatsAPIView.as_view(), name='get-all-seats'),
+    path('seats/update/<int:restaurant_id>/', UpdateAvailableSeatsAPIView.as_view(), name='update-seats'),
 ]
