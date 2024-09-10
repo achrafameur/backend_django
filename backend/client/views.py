@@ -1,6 +1,6 @@
 from django.shortcuts import render
 # Create your views here.
-from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier, PanierItem, Commande, Litige
+from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier, PanierItem, Commande, Litige, RestaurantSeats
 from backend.serializers import MenuSerializer,LitigeSerializer, FavorisRestaurantSerializer, FavorisMenuSerializer, PanierItemSerializer, AdminSerializer
 from django.http import JsonResponse
 from rest_framework.views import APIView
@@ -238,6 +238,7 @@ class GetPanierAPIView(APIView):
             serializer = PanierItemSerializer(panier_items, many=True)
             
             response_data = {
+                'panier_id': panier.id,
                 'items': serializer.data,
                 'total_panier': total_panier,
                 'total_tables': total_tables,
@@ -386,6 +387,18 @@ class StripeWebhookView(APIView):
                     menu.save()
                 else:
                     return HttpResponse(f"Not enough stock for menu {menu.nom}", status=400)
+                
+                if item.sur_place:
+                        try:
+                            restaurant_seats = RestaurantSeats.objects.get(restaurant=menu.admin)
+                            if restaurant_seats.available_seats >= 1:
+                                restaurant_seats.available_seats -= 1
+                                restaurant_seats.save()
+                            else:
+                                return HttpResponse(f"No available seats for restaurant {menu.admin.nom}", status=400)
+                        except RestaurantSeats.DoesNotExist:
+                            return HttpResponse(f"RestaurantSeats for restaurant {menu.admin.nom} not found", status=404)
+
             except Commande.DoesNotExist:
                 return HttpResponse(f"Commande with reference {client_reference_id} does not exist.", status=404)
 
