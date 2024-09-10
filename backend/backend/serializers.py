@@ -40,7 +40,7 @@ class PanierItemSerializer(ModelSerializer):
 
     class Meta:
         model = PanierItem
-        fields = ['id', 'menu', 'quantite', 'total']
+        fields = ['id', 'menu', 'quantite', 'total', 'sur_place']
 
 class PanierSerializer(ModelSerializer):
     items = PanierItemSerializer(many=True, read_only=True)
