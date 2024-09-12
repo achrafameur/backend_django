@@ -405,6 +405,9 @@ class StripeWebhookView(APIView):
         return HttpResponse(status=200)
     
 
+
+import pytz
+
 class UserOrdersAPIView(APIView):
     def get(self, request, user_id):
         try:
@@ -436,17 +439,14 @@ class UserOrdersAPIView(APIView):
                     })
 
                 date_commande_local = commande.date_commande.astimezone(france_timezone)
-                formatted_date = django_format(date_commande_local, 'Y-m-d H:i:s')
 
                 orders_data.append({
                     "reference": commande.reference,
-                    "date_commande": formatted_date,
+                    "date_commande": django_format(date_commande_local, 'Y-m-d H:i:s'),
                     "montant_total": commande.montant_total,
                     "est_payee": commande.est_payee,
                     "items": items_data
                 })
-
-            orders_data.sort(key=lambda x: x["date_commande"], reverse=True)
 
             return JsonResponse({"commandes": orders_data}, status=status.HTTP_200_OK)
         
