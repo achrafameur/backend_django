@@ -17,6 +17,14 @@ class MenuSerializer(ModelSerializer):
             'image': {'required': False}
         }
 
+class MenuUpdateSerializer(ModelSerializer):
+    class Meta:
+        model = Menu
+        fields = ['id', 'nom_organisme', 'nom', 'description', 'image', 'prix', 'number_dispo', 'is_approved', 'is_declined', 'type']
+        extra_kwargs = {
+            'image': {'required': False}
+        }
+
 class MenuAddSerializer(ModelSerializer):
     class Meta:
         model = Menu

@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from environ import Env
 from backend.models import Admins, Menu
-from backend.serializers import AdminSerializer, MenuSerializer, MenuAddSerializer, RestaurantSeatsSerializer
+from backend.serializers import AdminSerializer, MenuSerializer, MenuAddSerializer, RestaurantSeatsSerializer, MenuUpdateSerializer
 from django.utils import timezone
 from django.db.models import Sum, F
 from backend.models import FavorisRestaurant, FavorisMenu, Admins, Menu, Panier, PanierItem, Commande, RestaurantSeats
@@ -33,7 +33,7 @@ class UpdateMenuAPIView(APIView):
         except Menu.DoesNotExist:
             return JsonResponse({"message": "Menu not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        serializer = MenuSerializer(menu, data=request.data, partial=True)
+        serializer = MenuUpdateSerializer(menu, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data)
