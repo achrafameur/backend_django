@@ -89,6 +89,8 @@ class MenuDetailAPIView(APIView):
             return JsonResponse({"message": "Menu not found"}, status=status.HTTP_404_NOT_FOUND)
         
 
+import pytz
+
 class RestaurantOrdersAPIView(APIView):
     def get(self, request, restaurant_id):
         try:
@@ -106,11 +108,10 @@ class RestaurantOrdersAPIView(APIView):
 
                 if commande_ref not in commandes_dict:
                     date_commande_local = commande.date_commande.astimezone(france_timezone)
-                    formatted_date = django_format(date_commande_local, 'Y-m-d H:i:s')
 
                     commandes_dict[commande_ref] = {
                         "commande_reference": commande_ref,
-                        "date_commande": formatted_date,
+                        "date_commande": date_commande_local,
                         "prenom_client": item.panier.utilisateur.prenom,
                         "nom_client": item.panier.utilisateur.nom,
                         "menus": [],
@@ -130,10 +131,14 @@ class RestaurantOrdersAPIView(APIView):
 
             orders_data.sort(key=lambda x: x["date_commande"], reverse=True)
 
+            for order in orders_data:
+                order["date_commande"] = django_format(order["date_commande"], 'Y-m-d H:i:s')
+
             return JsonResponse({"orders": orders_data}, status=status.HTTP_200_OK)
 
         except Admins.DoesNotExist:
             return JsonResponse({"error": "Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
+
 
 
 class RestaurantStatsAPIView(APIView):
